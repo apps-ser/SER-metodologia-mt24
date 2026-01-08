@@ -117,6 +117,13 @@ class MLA_Projects
                 'error'
             );
         } else {
+            // Salvar Template ID (Mapeamento WP)
+            if (isset($_POST['template_id']) && isset($result['id'])) {
+                $project_templates = get_option('mla_project_templates', array());
+                $project_templates[$result['id']] = sanitize_key($_POST['template_id']);
+                update_option('mla_project_templates', $project_templates);
+            }
+
             // Redirecionar para lista com mensagem de sucesso
             wp_safe_redirect(add_query_arg(array(
                 'page' => 'mla-projects',
@@ -151,6 +158,13 @@ class MLA_Projects
         if (is_wp_error($result)) {
             add_settings_error('mla_projects', 'update_error', $result->get_error_message(), 'error');
         } else {
+            // Atualizar Template ID (Mapeamento WP)
+            if (isset($_POST['template_id'])) {
+                $project_templates = get_option('mla_project_templates', array());
+                $project_templates[$id] = sanitize_key($_POST['template_id']);
+                update_option('mla_project_templates', $project_templates);
+            }
+
             wp_safe_redirect(add_query_arg(array(
                 'page' => 'mla-projects',
                 'message' => 'updated',

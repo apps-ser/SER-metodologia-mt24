@@ -100,6 +100,35 @@ $is_edit = 'edit' === $action && $project;
                         </p>
                     </td>
                 </tr>
+
+                <!-- Template -->
+                <tr>
+                    <th scope="row">
+                        <label for="template_id">
+                            <?php esc_html_e('Modelo de Etapas', 'metodologia-leitor-apreciador'); ?>
+                        </label>
+                    </th>
+                    <td>
+                        <?php
+                        $settings = get_option('mla_settings', array());
+                        $templates = isset($settings['step_templates']) ? $settings['step_templates'] : array();
+                        $project_templates = get_option('mla_project_templates', array());
+                        $current_template = ($is_edit && isset($project_templates[$project_id])) ? $project_templates[$project_id] : '';
+                        ?>
+                        <select name="template_id" id="template_id">
+                            <option value="">
+                                <?php esc_html_e('— Selecionar Modelo —', 'metodologia-leitor-apreciador'); ?></option>
+                            <?php foreach ($templates as $tpl): ?>
+                                <option value="<?php echo esc_attr($tpl['id']); ?>" <?php selected($current_template, $tpl['id']); ?>>
+                                    <?php echo esc_html($tpl['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description">
+                            <?php esc_html_e('Define quais etapas e textos de ajuda aparecerão para este projeto.', 'metodologia-leitor-apreciador'); ?>
+                        </p>
+                    </td>
+                </tr>
             </tbody>
         </table>
 

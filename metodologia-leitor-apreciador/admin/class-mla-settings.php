@@ -29,6 +29,29 @@ class MLA_Settings
     public function __construct()
     {
         add_action('admin_init', array($this, 'register_settings'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+    }
+
+    /**
+     * Enfileira scripts do admin para o editor de templates.
+     */
+    public function enqueue_admin_scripts($hook)
+    {
+        if ('leitor-apreciador_page_mla-settings' !== $hook) {
+            return;
+        }
+
+        wp_enqueue_script('mla-settings-js', MLA_PLUGIN_URL . 'assets/js/mla-settings.js', array('jquery', 'jquery-ui-sortable'), MLA_VERSION, true);
+        wp_localize_script('mla-settings-js', 'mlaSettingsData', array(
+            'i18n' => array(
+                'addStep' => __('Adicionar Etapa', 'metodologia-leitor-apreciador'),
+                'removeStep' => __('Remover', 'metodologia-leitor-apreciador'),
+                'stepTitle' => __('Título da Etapa', 'metodologia-leitor-apreciador'),
+                'stepDesc' => __('Descrição', 'metodologia-leitor-apreciador'),
+                'stepKey' => __('Chave (ID único)', 'metodologia-leitor-apreciador'),
+                'confirmRemove' => __('Tem certeza que deseja remover?', 'metodologia-leitor-apreciador'),
+            )
+        ));
     }
 
     /**
@@ -84,25 +107,21 @@ class MLA_Settings
             'mla_general_section'
         );
 
-        // Seção: Textos das Etapas
+        // Seção: Templates de Etapas
         add_settings_section(
-            'mla_steps_section',
-            __('Textos Orientadores das Etapas', 'metodologia-leitor-apreciador'),
-            array($this, 'render_steps_section'),
+            'mla_templates_section',
+            __('Modelos de Etapas (Templates)', 'metodologia-leitor-apreciador'),
+            array($this, 'render_templates_section'),
             'mla-settings'
         );
 
-        // Campos dinâmicos para cada etapa
-        for ($i = 1; $i <= 5; $i++) {
-            add_settings_field(
-                'step_' . $i,
-                sprintf(__('Etapa %d', 'metodologia-leitor-apreciador'), $i),
-                array($this, 'render_step_field'),
-                'mla-settings',
-                'mla_steps_section',
-                array('step' => $i)
-            );
-        }
+        add_settings_field(
+            'step_templates',
+            __('Gerenciar Templates', 'metodologia-leitor-apreciador'),
+            array($this, 'render_templates_editor'),
+            'mla-settings',
+            'mla_templates_section'
+        );
 
         // Seção: Supabase
         add_settings_section(
@@ -139,164 +158,138 @@ class MLA_Settings
 
     /**
      * Renderiza a página de configurações.
-     *
-     * @return void
      */
     public function render_page()
     {
-        // Verificar permissões
         if (!current_user_can('manage_options')) {
             wp_die(esc_html__('Você não tem permissão para acessar esta página.', 'metodologia-leitor-apreciador'));
         }
-
         include MLA_PLUGIN_DIR . 'admin/partials/settings-page.php';
     }
 
-    /**
-     * Renderiza a descrição da seção geral.
-     *
-     * @return void
-     */
     public function render_general_section()
     {
         echo '<p>' . esc_html__('Configure o comportamento geral do formulário.', 'metodologia-leitor-apreciador') . '</p>';
     }
 
-    /**
-     * Renderiza a descrição da seção de etapas.
-     *
-     * @return void
-     */
-    public function render_steps_section()
+    public function render_templates_section()
     {
-        echo '<p>' . esc_html__('Personalize os textos de orientação exibidos em cada etapa do formulário.', 'metodologia-leitor-apreciador') . '</p>';
+        echo '<p>' . esc_html__('Crie modelos de etapas personalizados para usar em seus projetos.', 'metodologia-leitor-apreciador') . '</p>';
     }
 
     /**
-     * Renderiza a descrição da seção do Supabase.
-     *
-     * @return void
+     * Renderiza o editor de templates (Interface Rica).
      */
+    public function render_templates_editor()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+
+        // Migração: Se não houver templates, criar um Default com os dados antigos
+        $templates = isset($settings['step_templates']) ? $settings['step_templates'] : array();
+        if (empty($templates) && isset($settings['step_texts'])) {
+            $default_steps = array();
+            $keys = array('tema_central', 'temas_secundarios', 'correlacao', 'aspectos_positivos', 'duvidas', 'perguntas'); // Chaves legadas esperadas, mas o antigo era step_1..5
+
+            // Mapear steps antigos
+            $i = 0;
+            foreach ($settings['step_texts'] as $key => $val) {
+                // Tenta adivinhar a chave legada baseada na ordem, ou gera uma nova
+                $stepKey = isset($keys[$i]) ? $keys[$i] : 'step_' . ($i + 1);
+                $default_steps[] = array(
+                    'key' => $stepKey,
+                    'title' => $val['title'],
+                    'description' => $val['description']
+                );
+                $i++;
+            }
+
+            if (!empty($default_steps)) {
+                $templates[] = array(
+                    'id' => 'default',
+                    'name' => 'Modelo Padrão (Migrado)',
+                    'steps' => $default_steps
+                );
+            }
+        }
+
+        // Se ainda estiver vazio, cria um básico
+        if (empty($templates)) {
+            $templates[] = array(
+                'id' => uniqid('tpl_'),
+                'name' => 'Novo Modelo',
+                'steps' => array(
+                    array('key' => 'step_1', 'title' => 'Introdução', 'description' => 'Descrição da etapa...')
+                )
+            );
+        }
+
+        // Field oculto que armazenará o JSON
+        printf(
+            '<textarea id="mla_step_templates_json" name="%s[step_templates]" style="display:none;">%s</textarea>',
+            esc_attr(self::OPTION_KEY),
+            esc_textarea(json_encode($templates))
+        );
+
+        // Container para o React/JS App
+        echo '<div id="mla-templates-editor"></div>';
+        echo '<p class="description">' . __('Gerencie seus templates acima. Clique em "Salvar Alterações" no final da página para persistir.', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
     public function render_supabase_section()
     {
         echo '<p>' . esc_html__('Configure as credenciais do seu projeto Supabase.', 'metodologia-leitor-apreciador') . '</p>';
-
         if (defined('MLA_SUPABASE_URL') && defined('MLA_SUPABASE_ANON_KEY')) {
-            echo '<div class="notice notice-warning inline"><p>';
-            echo esc_html__('Atenção: As constantes MLA_SUPABASE_URL e MLA_SUPABASE_ANON_KEY estão definidas no wp-config.php e terão prioridade sobre estas configurações.', 'metodologia-leitor-apreciador');
-            echo '</p></div>';
+            echo '<div class="notice notice-warning inline"><p>' . esc_html__('Constantes definidas no wp-config.php têm prioridade.', 'metodologia-leitor-apreciador') . '</p></div>';
         }
     }
 
-    /**
-     * Renderiza o campo de URL do Supabase.
-     */
     public function render_supabase_url_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
         $value = isset($settings['supabase_url']) ? $settings['supabase_url'] : '';
-        printf(
-            '<input type="url" name="%s[supabase_url]" value="%s" class="regular-text code">',
-            esc_attr(self::OPTION_KEY),
-            esc_attr($value)
-        );
-        echo '<p class="description">' . esc_html__('Ex: https://seubrojeto.supabase.co', 'metodologia-leitor-apreciador') . '</p>';
+        printf('<input type="url" name="%s[supabase_url]" value="%s" class="regular-text code">', esc_attr(self::OPTION_KEY), esc_attr($value));
     }
 
-    /**
-     * Renderiza o campo de Anon Key.
-     */
     public function render_supabase_anon_key_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
         $value = isset($settings['supabase_anon_key']) ? $settings['supabase_anon_key'] : '';
-        printf(
-            '<input type="password" name="%s[supabase_anon_key]" value="%s" class="regular-text code">',
-            esc_attr(self::OPTION_KEY),
-            esc_attr($value)
-        );
-        echo '<p class="description">' . esc_html__('Chave pública (anon/public).', 'metodologia-leitor-apreciador') . '</p>';
+        printf('<input type="password" name="%s[supabase_anon_key]" value="%s" class="regular-text code">', esc_attr(self::OPTION_KEY), esc_attr($value));
     }
 
-    /**
-     * Renderiza o campo de Service Key.
-     */
     public function render_supabase_service_key_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
         $value = isset($settings['supabase_service_key']) ? $settings['supabase_service_key'] : '';
-        printf(
-            '<input type="password" name="%s[supabase_service_key]" value="%s" class="regular-text code">',
-            esc_attr(self::OPTION_KEY),
-            esc_attr($value)
-        );
-        echo '<p class="description">' . esc_html__('Chave secreta (service_role). Opcional, usada apenas para operações administrativas.', 'metodologia-leitor-apreciador') . '</p>';
+        printf('<input type="password" name="%s[supabase_service_key]" value="%s" class="regular-text code">', esc_attr(self::OPTION_KEY), esc_attr($value));
     }
 
-    /**
-     * Renderiza o campo de intervalo de auto-save.
-     *
-     * @return void
-     */
     public function render_autosave_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
         $value = isset($settings['autosave_interval']) ? intval($settings['autosave_interval']) : 20;
-
-        printf(
-            '<input type="number" id="autosave_interval" name="%s[autosave_interval]" value="%d" min="10" max="120" class="small-text">',
-            esc_attr(self::OPTION_KEY),
-            esc_attr($value)
-        );
-        echo '<p class="description">' . esc_html__('Intervalo em segundos para salvamento automático do rascunho. Mínimo: 10, Máximo: 120.', 'metodologia-leitor-apreciador') . '</p>';
+        printf('<input type="number" name="%s[autosave_interval]" value="%d" min="10" max="120" class="small-text">', esc_attr(self::OPTION_KEY), esc_attr($value));
     }
 
-    /**
-     * Renderiza o campo de formulário progressivo.
-     *
-     * @return void
-     */
     public function render_progressive_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
         $checked = isset($settings['progressive_form']) ? (bool) $settings['progressive_form'] : true;
-
-        printf(
-            '<label><input type="checkbox" id="progressive_form" name="%s[progressive_form]" value="1" %s> %s</label>',
-            esc_attr(self::OPTION_KEY),
-            checked($checked, true, false),
-            esc_html__('Exibir formulário em etapas sequenciais', 'metodologia-leitor-apreciador')
-        );
-        echo '<p class="description">' . esc_html__('Se desativado, todos os campos serão exibidos de uma vez.', 'metodologia-leitor-apreciador') . '</p>';
+        printf('<label><input type="checkbox" name="%s[progressive_form]" value="1" %s> %s</label>', esc_attr(self::OPTION_KEY), checked($checked, true, false), esc_html__('Exibir formulário em etapas sequenciais', 'metodologia-leitor-apreciador'));
     }
 
-    /**
-     * Renderiza o campo de tipos de post permitidos.
-     *
-     * @return void
-     */
     public function render_allowed_post_types_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
         $allowed_types = isset($settings['allowed_post_types']) ? $settings['allowed_post_types'] : array('post', 'page');
-
-        // Obter todos os tipos de post públicos
-        $args = array(
-            'public' => true,
-        );
-        $post_types = get_post_types($args, 'objects');
+        $post_types = get_post_types(array('public' => true), 'objects');
 
         echo '<fieldset>';
         foreach ($post_types as $post_type) {
-            // Pular attachment
-            if ('attachment' === $post_type->name) {
+            if ('attachment' === $post_type->name)
                 continue;
-            }
-
             printf(
-                '<label style="display:block; margin-bottom: 5px;">
-                    <input type="checkbox" name="%s[allowed_post_types][]" value="%s" %s> %s (%s)
-                </label>',
+                '<label style="display:block; margin-bottom: 5px;"><input type="checkbox" name="%s[allowed_post_types][]" value="%s" %s> %s (%s)</label>',
                 esc_attr(self::OPTION_KEY),
                 esc_attr($post_type->name),
                 in_array($post_type->name, $allowed_types) ? 'checked="checked"' : '',
@@ -305,121 +298,67 @@ class MLA_Settings
             );
         }
         echo '</fieldset>';
-        echo '<p class="description">' . esc_html__('Selecione em quais tipos de conteúdo a metodologia poderá ser ativada.', 'metodologia-leitor-apreciador') . '</p>';
     }
 
-    /**
-     * Renderiza o campo de submissão obrigatória.
-     *
-     * @return void
-     */
     public function render_submission_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
         $checked = isset($settings['submission_required']) ? (bool) $settings['submission_required'] : false;
-
-        printf(
-            '<label><input type="checkbox" id="submission_required" name="%s[submission_required]" value="1" %s> %s</label>',
-            esc_attr(self::OPTION_KEY),
-            checked($checked, true, false),
-            esc_html__('Exigir submissão explícita (não apenas rascunho)', 'metodologia-leitor-apreciador')
-        );
+        printf('<label><input type="checkbox" name="%s[submission_required]" value="1" %s> %s</label>', esc_attr(self::OPTION_KEY), checked($checked, true, false), esc_html__('Exigir submissão explícita', 'metodologia-leitor-apreciador'));
     }
 
-    /**
-     * Renderiza os campos de uma etapa.
-     *
-     * @param array $args Argumentos do campo.
-     *
-     * @return void
-     */
-    public function render_step_field($args)
-    {
-        $step = $args['step'];
-        $settings = get_option(self::OPTION_KEY, array());
-        $steps = isset($settings['step_texts']) ? $settings['step_texts'] : array();
-
-        $title = isset($steps['step_' . $step]['title']) ? $steps['step_' . $step]['title'] : '';
-        $description = isset($steps['step_' . $step]['description']) ? $steps['step_' . $step]['description'] : '';
-
-        echo '<div style="margin-bottom: 10px;">';
-        printf(
-            '<label>%s</label><br><input type="text" name="%s[step_texts][step_%d][title]" value="%s" class="regular-text">',
-            esc_html__('Título:', 'metodologia-leitor-apreciador'),
-            esc_attr(self::OPTION_KEY),
-            esc_attr($step),
-            esc_attr($title)
-        );
-        echo '</div>';
-
-        echo '<div>';
-        printf(
-            '<label>%s</label><br><textarea name="%s[step_texts][step_%d][description]" rows="2" class="large-text">%s</textarea>',
-            esc_html__('Descrição:', 'metodologia-leitor-apreciador'),
-            esc_attr(self::OPTION_KEY),
-            esc_attr($step),
-            esc_textarea($description)
-        );
-        echo '</div>';
-    }
-
-    /**
-     * Sanitiza as configurações antes de salvar.
-     *
-     * @param array $input Dados de entrada.
-     *
-     * @return array Dados sanitizados.
-     */
     public function sanitize_settings($input)
     {
         $sanitized = array();
 
-        // Auto-save interval
-        if (isset($input['autosave_interval'])) {
+        if (isset($input['autosave_interval']))
             $sanitized['autosave_interval'] = max(10, min(120, intval($input['autosave_interval'])));
-        }
-
-        // Progressive form
         $sanitized['progressive_form'] = isset($input['progressive_form']) ? true : false;
 
-        // Allowed Post Types
         if (isset($input['allowed_post_types']) && is_array($input['allowed_post_types'])) {
             $sanitized['allowed_post_types'] = array_map('sanitize_text_field', $input['allowed_post_types']);
         } else {
             $sanitized['allowed_post_types'] = array('post', 'page');
         }
 
-        // Submission required
         $sanitized['submission_required'] = isset($input['submission_required']) ? true : false;
 
-        // Step texts
-        if (isset($input['step_texts']) && is_array($input['step_texts'])) {
-            $sanitized['step_texts'] = array();
+        // Templates (JSON decode -> sanitize -> encode)
+        if (isset($input['step_templates'])) {
+            $templates = json_decode(stripslashes($input['step_templates']), true);
+            if (is_array($templates)) {
+                $clean_templates = array();
+                foreach ($templates as $tpl) {
+                    if (empty($tpl['name']))
+                        continue; // Skip empty names
 
-            for ($i = 1; $i <= 5; $i++) {
-                $step_key = 'step_' . $i;
+                    $clean_steps = array();
+                    if (isset($tpl['steps']) && is_array($tpl['steps'])) {
+                        foreach ($tpl['steps'] as $step) {
+                            $clean_steps[] = array(
+                                'key' => sanitize_key($step['key']), // Keys must be safe
+                                'title' => sanitize_text_field($step['title']),
+                                'description' => sanitize_textarea_field($step['description'])
+                            );
+                        }
+                    }
 
-                if (isset($input['step_texts'][$step_key])) {
-                    $sanitized['step_texts'][$step_key] = array(
-                        'title' => sanitize_text_field($input['step_texts'][$step_key]['title']),
-                        'description' => sanitize_textarea_field($input['step_texts'][$step_key]['description']),
+                    $clean_templates[] = array(
+                        'id' => sanitize_key($tpl['id']),
+                        'name' => sanitize_text_field($tpl['name']),
+                        'steps' => $clean_steps
                     );
                 }
+                $sanitized['step_templates'] = $clean_templates;
             }
         }
 
-        // Supabase Settings
-        if (isset($input['supabase_url'])) {
+        if (isset($input['supabase_url']))
             $sanitized['supabase_url'] = esc_url_raw($input['supabase_url']);
-        }
-
-        if (isset($input['supabase_anon_key'])) {
+        if (isset($input['supabase_anon_key']))
             $sanitized['supabase_anon_key'] = sanitize_text_field($input['supabase_anon_key']);
-        }
-
-        if (isset($input['supabase_service_key'])) {
+        if (isset($input['supabase_service_key']))
             $sanitized['supabase_service_key'] = sanitize_text_field($input['supabase_service_key']);
-        }
 
         return $sanitized;
     }

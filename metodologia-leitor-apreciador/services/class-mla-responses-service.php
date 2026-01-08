@@ -121,7 +121,7 @@ class MLA_Responses_Service
         $result = $this->client->get(self::TABLE_NAME, array(
             'wp_user_id' => 'eq.' . intval($wp_user_id),
             'text_id' => 'eq.' . $text_id,
-        ), false); // Usa chave anon com RLS
+        ), true); // Usa service key (admin) para ignorar RLS
 
         if (is_wp_error($result)) {
             return $result;
@@ -157,13 +157,13 @@ class MLA_Responses_Service
             ), array(
                 'data' => $sanitized['data'],
                 'updated_at' => $sanitized['updated_at'],
-            ), false);
+            ), true);
 
             return is_array($result) && isset($result[0]) ? $result[0] : $result;
         } else {
             // Criar novo rascunho
             $sanitized['version'] = 1;
-            $result = $this->client->post(self::TABLE_NAME, $sanitized, false);
+            $result = $this->client->post(self::TABLE_NAME, $sanitized, true);
             return is_array($result) && isset($result[0]) ? $result[0] : $result;
         }
     }
@@ -205,7 +205,7 @@ class MLA_Responses_Service
             'status' => 'submitted',
             'version' => $new_version,
             'updated_at' => current_time('c'),
-        ), false);
+        ), true);
 
         return is_array($result) && isset($result[0]) ? $result[0] : $result;
     }

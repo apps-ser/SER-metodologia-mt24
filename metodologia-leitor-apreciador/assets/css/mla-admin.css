@@ -168,8 +168,102 @@
     .mla-dashboard-cards {
         grid-template-columns: 1fr;
     }
-    
+
     .mla-detail-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Template Editor */
+#mla-templates-editor {
+    margin-top: 20px;
+}
+
+.mla-template-item {
+    margin-bottom: 30px;
+    border: 1px solid #c3c4c7;
+    background: #fff;
+}
+
+.mla-template-item .postbox-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+    background: #f6f7f7;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.mla-template-item .handle-actions {
+    padding: 10px 0;
+}
+
+.mla-form-row {
+    margin-bottom: 15px;
+}
+
+.mla-form-row label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.mla-steps-list {
+    margin: 15px 0;
+}
+
+.mla-step-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.mla-step-item .drag-handle {
+    cursor: move;
+    margin-right: 10px;
+    color: #999;
+    padding-top: 5px;
+}
+
+.mla-step-item .step-inputs {
+    flex-grow: 1;
+}
+
+.step-input-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.step-input-row>div {
+    flex: 1;
+}
+
+.step-input-row label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 3px;
+    color: #666;
+}
+
+.step-input-row input,
+.step-input-row textarea {
+    width: 100%;
+}
+
+.step-input-row .small-text {
+    width: 100%;
+}
+
+.text-error {
+    color: #d63638 !important;
+}
+
+.mla-step-item .button-link-delete {
+    margin-left: 10px;
+    padding-top: 5px;
 }

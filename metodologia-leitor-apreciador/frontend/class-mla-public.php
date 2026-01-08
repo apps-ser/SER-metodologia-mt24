@@ -57,6 +57,12 @@ class MLA_Public
             array(),
             MLA_VERSION
         );
+
+        // Fix for LearnDash sidebar layout issue
+        wp_add_inline_style(
+            'mla-public',
+            '.lms-topic-sidebar-wrapper .lms-topic-sidebar-data { position: static !important; }'
+        );
     }
 
     /**
@@ -81,6 +87,23 @@ class MLA_Public
         $settings = get_option('mla_settings', array());
         $post_id = get_the_ID();
         $text_id = get_post_meta($post_id, '_mla_text_id', true);
+        $project_id = get_post_meta($post_id, '_mla_project_id', true);
+
+        // Obter nome do projeto
+        $project_name = '';
+        if ($project_id && class_exists('MLA_Projects_Service')) {
+            $projects_service = new MLA_Projects_Service();
+            $project = $projects_service->get_by_id($project_id);
+            if ($project && !is_wp_error($project)) {
+                $project_name = $project['name'];
+            }
+        }
+
+        // Obter etapas dinâmicas
+        $steps = array();
+        if (isset($this->form_renderer)) {
+            $steps = $this->form_renderer->get_steps($project_id);
+        }
 
         wp_localize_script('mla-public-form', 'mlaSettings', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -88,9 +111,12 @@ class MLA_Public
             'nonce' => wp_create_nonce('wp_rest'),
             'postId' => $post_id,
             'textId' => $text_id,
-            'projectId' => get_post_meta($post_id, '_mla_project_id', true),
+            'textTitle' => get_the_title($post_id),
+            'projectId' => $project_id,
+            'projectName' => $project_name,
             'userId' => get_current_user_id(),
             'userEmail' => wp_get_current_user()->user_email,
+            'steps' => array_values($steps), // Garante array indexado para JS
             'autosaveInterval' => isset($settings['autosave_interval']) ? intval($settings['autosave_interval']) * 1000 : 20000,
             'progressiveForm' => isset($settings['progressive_form']) ? (bool) $settings['progressive_form'] : true,
             'i18n' => array(
@@ -136,6 +162,7 @@ class MLA_Public
 
         $post_id = get_the_ID();
         $enabled = get_post_meta($post_id, '_mla_enabled', true);
+        $project_id = get_post_meta($post_id, '_mla_project_id', true);
 
         if ('1' !== $enabled) {
             return;
@@ -143,7 +170,7 @@ class MLA_Public
 
         // Renderiza o formulário em um container isolado
         echo '<div class="mla-form-container-wrapper">';
-        echo $this->form_renderer->render();
+        echo $this->form_renderer->render($project_id);
         echo '</div>';
     }
 

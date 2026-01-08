@@ -44,8 +44,13 @@
             return;
         }
 
-        // Cache de elementos
+        // Cache de elementos base
         $form = $('#mla-form');
+
+        // As etapas já são renderizadas pelo PHP no form-container.php
+        // com base no get_steps() que já retorna o template correto.
+
+        // Cache de elementos de navegação
         $steps = $form.find('.mla-step[data-step]').not('[data-step="summary"]');
         $progressFill = $wrapper.find('.mla-progress-fill');
         $progressText = $wrapper.find('.mla-progress-text');
@@ -190,23 +195,38 @@
     function fillFormData(data) {
         if (!data) return;
 
-        var fields = ['tema_central', 'temas_secundarios', 'correlacao',
-            'aspectos_positivos', 'duvidas', 'perguntas'];
+        // Tenta preencher campos dinâmicos
+        if (mlaSettings.steps && mlaSettings.steps.length) {
+            mlaSettings.steps.forEach(function (step) {
+                if (step.fields) {
+                    step.fields.forEach(function (field) {
+                        if (data[field.name]) {
+                            $form.find('[name="' + field.name + '"]').val(data[field.name]);
+                        }
+                    });
+                }
+            });
+        } else {
+            // Fallback para campos legados (se não houver steps definidos)
+            var legacyFields = ['tema_central', 'temas_secundarios', 'correlacao',
+                'aspectos_positivos', 'duvidas', 'perguntas'];
 
-        fields.forEach(function (field) {
-            if (data[field]) {
-                $form.find('[name="' + field + '"]').val(data[field]);
-            }
-        });
+            legacyFields.forEach(function (field) {
+                if (data[field]) {
+                    $form.find('[name="' + field + '"]').val(data[field]);
+                }
+            });
+        }
     }
 
     /**
      * Mostrar aviso de edição
      */
+    /**
+     * Mostrar aviso de edição
+     */
     function showEditWarning() {
-        if (confirm(mlaSettings.i18n.editWarning + '\n\n' + mlaSettings.i18n.continueEditing)) {
-            // Continuar editando
-        }
+        showToast(mlaSettings.i18n.continueEditing, 'info');
     }
 
     /**
@@ -261,7 +281,7 @@
 
         // Controlar visibilidade dos botões
         $btnPrev.toggle(state.currentStep > 1);
-        $btnNext.toggle(state.currentStep < state.totalSteps);
+        $btnNext.toggle(state.currentStep <= state.totalSteps);
         $btnSubmit.hide();
         $btnReview.hide();
 
@@ -285,18 +305,30 @@
         // Esconder etapas
         $steps.removeClass('mla-step-active');
 
-        // Gerar resumo
+        // Gerar resumo baseado nas etapas enviadas ou no fallback legado
         var summaryHtml = '';
-        var fields = [
-            { name: 'tema_central', label: 'Tema Central' },
-            { name: 'temas_secundarios', label: 'Temas Secundários' },
-            { name: 'correlacao', label: 'Correlação Doutrinária' },
-            { name: 'aspectos_positivos', label: 'Aspectos Positivos' },
-            { name: 'duvidas', label: 'Dúvidas Identificadas' },
-            { name: 'perguntas', label: 'Perguntas Formuladas' }
-        ];
+        var summaryFields = [];
 
-        fields.forEach(function (field) {
+        if (mlaSettings.steps && mlaSettings.steps.length) {
+            mlaSettings.steps.forEach(function (step) {
+                if (step.fields) {
+                    step.fields.forEach(function (f) {
+                        summaryFields.push({ name: f.name, label: f.label || step.title });
+                    });
+                }
+            });
+        } else {
+            summaryFields = [
+                { name: 'tema_central', label: 'Tema Central' },
+                { name: 'temas_secundarios', label: 'Temas Secundários' },
+                { name: 'correlacao', label: 'Correlação Doutrinária' },
+                { name: 'aspectos_positivos', label: 'Aspectos Positivos' },
+                { name: 'duvidas', label: 'Dúvidas Identificadas' },
+                { name: 'perguntas', label: 'Perguntas Formuladas' }
+            ];
+        }
+
+        summaryFields.forEach(function (field) {
             var value = $form.find('[name="' + field.name + '"]').val() || '—';
             summaryHtml += '<div class="mla-summary-item">';
             summaryHtml += '<h5>' + field.label + '</h5>';
@@ -335,15 +367,33 @@
     /**
      * Coletar dados do formulário
      */
+    /**
+     * Coletar dados do formulário
+     */
     function collectFormData() {
-        return {
-            tema_central: $form.find('[name="tema_central"]').val() || '',
-            temas_secundarios: $form.find('[name="temas_secundarios"]').val() || '',
-            correlacao: $form.find('[name="correlacao"]').val() || '',
-            aspectos_positivos: $form.find('[name="aspectos_positivos"]').val() || '',
-            duvidas: $form.find('[name="duvidas"]').val() || '',
-            perguntas: $form.find('[name="perguntas"]').val() || ''
+        var data = {
+            text_title: mlaSettings.textTitle || '',
+            project_name: mlaSettings.projectName || ''
         };
+
+        if (mlaSettings.steps && mlaSettings.steps.length) {
+            mlaSettings.steps.forEach(function (step) {
+                if (step.fields) {
+                    step.fields.forEach(function (field) {
+                        data[field.name] = $form.find('[name="' + field.name + '"]').val() || '';
+                    });
+                }
+            });
+        } else {
+            // Fallback legado
+            var legacyFields = ['tema_central', 'temas_secundarios', 'correlacao',
+                'aspectos_positivos', 'duvidas', 'perguntas'];
+            legacyFields.forEach(function (field) {
+                data[field] = $form.find('[name="' + field + '"]').val() || '';
+            });
+        }
+
+        return data;
     }
 
     /**
@@ -412,37 +462,41 @@
         saveResponse();
 
         if (!state.responseId) {
-            alert('Aguarde o salvamento do rascunho.');
+            showToast('Aguarde o salvamento do rascunho.', 'info');
             return;
         }
 
-        // Confirmar submissão
-        if (!confirm(mlaSettings.i18n.confirmSubmit)) {
-            return;
-        }
+        // Confirmar submissão com Modal Customizado
+        showConfirm(
+            'Confirmar Submissão',
+            mlaSettings.i18n.confirmSubmit,
+            function () {
+                // Callback de confirmação
+                $btnSubmit.prop('disabled', true).text(mlaSettings.i18n.submitting);
 
-        $btnSubmit.prop('disabled', true).text(mlaSettings.i18n.submitting);
-
-        $.ajax({
-            url: mlaSettings.restUrl + 'responses/' + state.responseId + '/submit',
-            method: 'POST',
-            headers: {
-                'X-WP-Nonce': mlaSettings.nonce
-            },
-            success: function (response) {
-                if (response.success) {
-                    state.status = 'submitted';
-                    showSuccess();
-                } else {
-                    alert(response.message || mlaSettings.i18n.error);
-                    $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
-                }
-            },
-            error: function () {
-                alert(mlaSettings.i18n.error);
-                $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+                $.ajax({
+                    url: mlaSettings.restUrl + 'responses/' + state.responseId + '/submit',
+                    method: 'POST',
+                    headers: {
+                        'X-WP-Nonce': mlaSettings.nonce
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            state.status = 'submitted';
+                            showSuccess();
+                            showToast(mlaSettings.i18n.submitted, 'success');
+                        } else {
+                            showToast(response.message || mlaSettings.i18n.error, 'error');
+                            $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+                        }
+                    },
+                    error: function () {
+                        showToast(mlaSettings.i18n.error, 'error');
+                        $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+                    }
+                });
             }
-        });
+        );
     }
 
     /**
@@ -469,12 +523,17 @@
      * Mostrar status de salvamento
      */
     function showSaveStatus(type, message) {
+        // Se for erro, mostra Toast também
+        if (type === 'error') {
+            showToast(message, 'error');
+        }
+
         $saveStatus
             .removeClass('saving error')
             .addClass(type)
             .find('.mla-save-text').text(message);
 
-        $saveStatus.show();
+        $saveStatus.fadeIn();
 
         if (type === 'saved') {
             setTimeout(function () {
@@ -487,9 +546,69 @@
      * Escapar HTML
      */
     function escapeHtml(text) {
+        if (!text) return '';
         var div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML.replace(/\n/g, '<br>');
+    }
+
+    /**
+     * Mostrar Toast Notification
+     */
+    function showToast(message, type) {
+        type = type || 'info';
+
+        var $toastContainer = $('.mla-toast-container');
+        if (!$toastContainer.length) {
+            $toastContainer = $('<div class="mla-toast-container"></div>').appendTo('body');
+        }
+
+        var $toast = $('<div class="mla-toast ' + type + '">' + escapeHtml(message) + '</div>');
+
+        $toastContainer.append($toast);
+
+        // Remover após 4 segundos
+        setTimeout(function () {
+            $toast.fadeOut(300, function () {
+                $(this).remove();
+            });
+        }, 4000);
+    }
+
+    /**
+     * Mostrar Modal de Confirmação
+     */
+    function showConfirm(title, message, onConfirm) {
+        var $overlay = $('<div class="mla-modal-overlay"></div>');
+        var $modal = $('<div class="mla-modal"></div>');
+
+        var html = '<h4>' + escapeHtml(title) + '</h4>';
+        html += '<p>' + escapeHtml(message) + '</p>';
+        html += '<div class="mla-modal-actions">';
+        html += '<button class="mla-btn mla-btn-secondary mla-btn-cancel">Cancelar</button>';
+        html += '<button class="mla-btn mla-btn-primary mla-btn-confirm">Confirmar</button>';
+        html += '</div>';
+
+        $modal.html(html);
+        $overlay.append($modal).appendTo('body');
+
+        // Focar no botão confirmar
+        $modal.find('.mla-btn-confirm').focus();
+
+        // Eventos
+        var $btnCancel = $modal.find('.mla-btn-cancel');
+        var $btnConfirm = $modal.find('.mla-btn-confirm');
+
+        $btnCancel.on('click', function () {
+            $overlay.fadeOut(200, function () { $(this).remove(); });
+        });
+
+        $btnConfirm.on('click', function () {
+            $overlay.fadeOut(200, function () { $(this).remove(); });
+            if (typeof onConfirm === 'function') {
+                onConfirm();
+            }
+        });
     }
 
     // Inicializar quando DOM estiver pronto

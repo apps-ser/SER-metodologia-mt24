@@ -35,16 +35,17 @@ class MLA_Form_Renderer
     /**
      * Renderiza o formulário completo.
      *
+     * @param int|null $project_id ID do projeto para carregar o modelo correto.
      * @return string HTML do formulário.
      */
-    public function render()
+    public function render($project_id = null)
     {
         // Verificar se usuário está logado
         if (!is_user_logged_in()) {
             return $this->render_login_required();
         }
 
-        $steps = $this->get_steps();
+        $steps = $this->get_steps($project_id);
 
         ob_start();
         include MLA_PLUGIN_DIR . 'frontend/partials/form-container.php';
@@ -68,8 +69,50 @@ class MLA_Form_Renderer
      *
      * @return array Etapas configuradas.
      */
-    public function get_steps()
+    public function get_steps($project_id = null)
     {
+        $settings = $this->settings;
+        $templates = isset($settings['step_templates']) ? $settings['step_templates'] : array();
+
+        // 1. Tentar obter o template do projeto
+        $project_template_id = '';
+        if ($project_id) {
+            $project_templates = get_option('mla_project_templates', array());
+            $project_template_id = isset($project_templates[$project_id]) ? $project_templates[$project_id] : '';
+        }
+
+        // 2. Procurar o template
+        $active_template = null;
+        if ($project_template_id) {
+            foreach ($templates as $tpl) {
+                if ($tpl['id'] === $project_template_id) {
+                    $active_template = $tpl;
+                    break;
+                }
+            }
+        }
+
+        // 3. Se achou template, retornar os steps dele
+        if ($active_template && !empty($active_template['steps'])) {
+            $formatted_steps = array();
+            foreach ($active_template['steps'] as $index => $step) {
+                $formatted_steps[$index + 1] = array(
+                    'key' => $step['key'],
+                    'title' => $step['title'],
+                    'description' => $step['description'],
+                    'fields' => array(
+                        array(
+                            'name' => $step['key'], // Usa a chave da etapa como nome do campo único por enquanto
+                            'label' => $step['title'],
+                            'placeholder' => __('Sua resposta...', 'metodologia-leitor-apreciador'),
+                        )
+                    )
+                );
+            }
+            return $formatted_steps;
+        }
+
+        // 4. Fallback: Comportamento Legado (Steps Fixos)
         $step_texts = isset($this->settings['step_texts']) ? $this->settings['step_texts'] : array();
 
         $default_steps = array(
@@ -140,7 +183,7 @@ class MLA_Form_Renderer
             ),
         );
 
-        // Sobrescrever com textos personalizados
+        // Sobrescrever com textos personalizados (método antigo)
         foreach ($default_steps as $num => &$step) {
             $key = 'step_' . $num;
             if (isset($step_texts[$key])) {
