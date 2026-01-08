@@ -35,6 +35,9 @@
      * Inicialização
      */
     function init() {
+        // Primeiro, reposicionar o container do formulário para dentro do conteúdo do LearnDash
+        relocateFormContainer();
+
         $wrapper = $('#mla-form-wrapper');
 
         if (!$wrapper.length) {
@@ -74,6 +77,45 @@
         // Carregar resposta existente
         loadExistingResponse();
     }
+
+    /**
+     * Reposicionar o container do formulário para dentro do conteúdo correto
+     * Isso resolve o problema de sobreposição com sidebars do LearnDash/BuddyBoss
+     */
+    function relocateFormContainer() {
+        var $formContainer = $('.mla-form-container-wrapper');
+
+        if (!$formContainer.length) {
+            return;
+        }
+
+        // Tentar encontrar o container de conteúdo do LearnDash
+        var $targetContainer = null;
+
+        // Lista de seletores possíveis, em ordem de prioridade
+        var selectors = [
+            '#learndash-page-content .learndash_content_wrap',  // LearnDash Focus Mode
+            '#learndash-page-content',                          // LearnDash
+            '.learndash_content_wrap',                          // LearnDash alternativo
+            '.entry-content',                                   // Tema padrão
+            '#primary .site-main',                              // Estrutura comum
+            'article .entry-content',                           // Post/page
+            '#content'                                          // Fallback geral
+        ];
+
+        for (var i = 0; i < selectors.length; i++) {
+            $targetContainer = $(selectors[i]);
+            if ($targetContainer.length) {
+                break;
+            }
+        }
+
+        if ($targetContainer && $targetContainer.length) {
+            // Mover o container do formulário para dentro do target
+            $formContainer.appendTo($targetContainer);
+        }
+    }
+
 
     /**
      * Bind de eventos

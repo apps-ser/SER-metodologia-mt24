@@ -20,14 +20,53 @@
     --mla-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Form Container Wrapper (positioned inside content area) */
+.mla-form-container-wrapper {
+    max-width: 680px !important;
+    width: 100% !important;
+    margin: 40px auto !important;
+    padding: 0 20px !important;
+    clear: both !important;
+    display: block !important;
+    float: none !important;
+    position: relative !important;
+}
+
 /* Form Wrapper */
 .mla-form-wrapper {
-    margin: 40px 0;
-    padding: 30px;
-    background: var(--mla-white);
-    border: 1px solid var(--mla-border);
-    border-radius: var(--mla-radius);
-    box-shadow: var(--mla-shadow);
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 30px !important;
+    background: var(--mla-white) !important;
+    border: 1px solid var(--mla-border) !important;
+    border-radius: var(--mla-radius) !important;
+    box-shadow: var(--mla-shadow) !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    float: none !important;
+}
+
+/* Login Required Box */
+.mla-login-required {
+    max-width: 100% !important;
+    width: 100% !important;
+    display: block !important;
+    float: none !important;
+}
+
+/* Mobile: formulário ocupa 100% da largura */
+@media (max-width: 768px) {
+    .mla-form-container-wrapper {
+        max-width: 100% !important;
+        margin: 20px 0 !important;
+        padding: 0 10px !important;
+    }
+
+    .mla-form-wrapper {
+        padding: 20px !important;
+        border-radius: 0 !important;
+    }
 }
 
 /* Header */

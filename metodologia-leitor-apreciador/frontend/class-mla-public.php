@@ -124,27 +124,27 @@ class MLA_Public
     }
 
     /**
-     * Adiciona o formulário ao final do conteúdo.
+     * Renderiza o formulário no rodapé da página.
      *
-     * @param string $content Conteúdo do post.
-     *
-     * @return string Conteúdo modificado.
+     * @return void
      */
-    public function append_form_to_content($content)
+    public function render_form_in_footer()
     {
-        if (!is_singular() || !in_the_loop() || !is_main_query()) {
-            return $content;
+        if (!is_singular()) {
+            return;
         }
 
         $post_id = get_the_ID();
         $enabled = get_post_meta($post_id, '_mla_enabled', true);
 
         if ('1' !== $enabled) {
-            return $content;
+            return;
         }
 
-        $form_html = $this->form_renderer->render();
-        return $content . $form_html;
+        // Renderiza o formulário em um container isolado
+        echo '<div class="mla-form-container-wrapper">';
+        echo $this->form_renderer->render();
+        echo '</div>';
     }
 
     /**

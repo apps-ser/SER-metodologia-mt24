@@ -186,7 +186,7 @@ function mla_init()
 
     // Frontend
     $public = new MLA_Public();
-    $loader->add_filter('the_content', $public, 'append_form_to_content', 99);
+    $loader->add_action('wp_footer', $public, 'render_form_in_footer', 10);
     $loader->add_action('wp_enqueue_scripts', $public, 'enqueue_styles');
     $loader->add_action('wp_enqueue_scripts', $public, 'enqueue_scripts');
 
