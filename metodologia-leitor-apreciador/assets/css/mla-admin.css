@@ -1,0 +1,175 @@
+/**
+ * Estilos do Admin - Metodologia Leitor-Apreciador
+ *
+ * @package MetodologiaLeitorApreciador
+ */
+
+/* Dashboard Cards */
+.mla-dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.mla-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.mla-card-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.mla-card-icon .dashicons {
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+    color: #2271b1;
+}
+
+.mla-card-content h2 {
+    font-size: 36px;
+    margin: 0;
+    color: #1d2327;
+}
+
+.mla-card-content p {
+    margin: 5px 0 15px;
+    color: #50575e;
+}
+
+.mla-card-success .mla-card-icon .dashicons {
+    color: #00a32a;
+}
+
+.mla-card-warning .mla-card-icon .dashicons {
+    color: #dba617;
+}
+
+/* Info Box */
+.mla-info-box,
+.mla-status-box {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.mla-info-box h3,
+.mla-status-box h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.mla-status-ok {
+    color: #00a32a;
+}
+
+.mla-status-ok .dashicons {
+    color: #00a32a;
+}
+
+.mla-status-warning {
+    color: #dba617;
+}
+
+.mla-status-warning .dashicons {
+    color: #dba617;
+}
+
+/* Status Badges */
+.mla-status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mla-status-active,
+.mla-status-submitted {
+    background: #d4edda;
+    color: #155724;
+}
+
+.mla-status-archived {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.mla-status-draft {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* Tables */
+.wp-list-table .column-status {
+    width: 100px;
+}
+
+.wp-list-table .column-version {
+    width: 60px;
+    text-align: center;
+}
+
+.wp-list-table .column-actions {
+    width: 150px;
+}
+
+/* Form styles */
+.mla-detail-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.mla-detail-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.mla-detail-card h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.mla-field {
+    margin-bottom: 20px;
+}
+
+.mla-field h4 {
+    margin: 0 0 8px;
+    color: #1d2327;
+}
+
+.mla-field-content {
+    background: #f6f7f7;
+    padding: 12px;
+    border-radius: 4px;
+    min-height: 40px;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 782px) {
+    .mla-dashboard-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .mla-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}

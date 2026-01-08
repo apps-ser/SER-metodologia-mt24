@@ -1,0 +1,391 @@
+/**
+ * Estilos Públicos - Metodologia Leitor-Apreciador
+ *
+ * @package MetodologiaLeitorApreciador
+ */
+
+/* Variables */
+:root {
+    --mla-primary: #2271b1;
+    --mla-primary-hover: #135e96;
+    --mla-success: #00a32a;
+    --mla-success-hover: #008a20;
+    --mla-warning: #dba617;
+    --mla-text: #1d2327;
+    --mla-text-light: #50575e;
+    --mla-border: #c3c4c7;
+    --mla-bg: #f6f7f7;
+    --mla-white: #ffffff;
+    --mla-radius: 8px;
+    --mla-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Wrapper */
+.mla-form-wrapper {
+    margin: 40px 0;
+    padding: 30px;
+    background: var(--mla-white);
+    border: 1px solid var(--mla-border);
+    border-radius: var(--mla-radius);
+    box-shadow: var(--mla-shadow);
+}
+
+/* Header */
+.mla-form-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--mla-border);
+}
+
+.mla-form-title {
+    font-size: 24px;
+    color: var(--mla-text);
+    margin: 0 0 10px;
+}
+
+.mla-icon {
+    margin-right: 8px;
+}
+
+.mla-form-intro {
+    color: var(--mla-text-light);
+    margin: 0;
+    font-size: 16px;
+}
+
+/* Progress Bar */
+.mla-progress-bar {
+    margin-bottom: 30px;
+}
+
+.mla-progress-track {
+    height: 8px;
+    background: var(--mla-bg);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.mla-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mla-primary), var(--mla-success));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.mla-progress-text {
+    font-size: 14px;
+    color: var(--mla-text-light);
+    text-align: center;
+}
+
+.mla-step-title {
+    font-weight: 500;
+    color: var(--mla-text);
+}
+
+/* Save Status */
+.mla-save-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    background: #d4edda;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #155724;
+}
+
+.mla-save-status.saving {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.mla-save-status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.mla-save-icon {
+    margin-right: 8px;
+}
+
+/* Steps */
+.mla-step {
+    display: none;
+}
+
+.mla-step-active {
+    display: block;
+}
+
+.mla-step-header {
+    margin-bottom: 20px;
+}
+
+.mla-step-header h4 {
+    font-size: 20px;
+    color: var(--mla-text);
+    margin: 0 0 8px;
+}
+
+.mla-step-description {
+    color: var(--mla-text-light);
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* Fields */
+.mla-field {
+    margin-bottom: 20px;
+}
+
+.mla-field label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--mla-text);
+}
+
+.mla-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 15px;
+    border: 1px solid var(--mla-border);
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mla-textarea:focus {
+    outline: none;
+    border-color: var(--mla-primary);
+    box-shadow: 0 0 0 2px rgba(34, 113, 177, 0.2);
+}
+
+.mla-textarea::placeholder {
+    color: #a7aaad;
+}
+
+/* Navigation */
+.mla-form-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--mla-border);
+}
+
+.mla-nav-spacer {
+    flex: 1;
+}
+
+/* Buttons */
+.mla-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mla-btn-primary {
+    background: var(--mla-primary);
+    color: var(--mla-white);
+}
+
+.mla-btn-primary:hover {
+    background: var(--mla-primary-hover);
+}
+
+.mla-btn-secondary {
+    background: var(--mla-bg);
+    color: var(--mla-text);
+    border: 1px solid var(--mla-border);
+}
+
+.mla-btn-secondary:hover {
+    background: #e8eaeb;
+}
+
+.mla-btn-success {
+    background: var(--mla-success);
+    color: var(--mla-white);
+}
+
+.mla-btn-success:hover {
+    background: var(--mla-success-hover);
+}
+
+.mla-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Summary */
+.mla-step-summary .mla-summary-content {
+    background: var(--mla-bg);
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.mla-summary-item {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--mla-border);
+}
+
+.mla-summary-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.mla-summary-item h5 {
+    font-size: 14px;
+    color: var(--mla-text-light);
+    margin: 0 0 5px;
+    font-weight: 500;
+}
+
+.mla-summary-item p {
+    margin: 0;
+    color: var(--mla-text);
+    white-space: pre-wrap;
+}
+
+.mla-submit-notice {
+    background: #e7f3ff;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid var(--mla-primary);
+}
+
+.mla-submit-notice p {
+    margin: 0;
+    color: var(--mla-text);
+    font-size: 14px;
+}
+
+/* Success Message */
+.mla-success-message {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.mla-success-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--mla-success);
+    color: var(--mla-white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin: 0 auto 20px;
+}
+
+.mla-success-message h3 {
+    color: var(--mla-text);
+    margin: 0 0 10px;
+}
+
+.mla-success-message p {
+    color: var(--mla-text-light);
+    margin: 0 0 20px;
+}
+
+/* Login Required */
+.mla-login-required {
+    margin: 40px 0;
+    padding: 40px;
+    background: var(--mla-bg);
+    border-radius: var(--mla-radius);
+    text-align: center;
+}
+
+.mla-login-box {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.mla-login-icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.mla-login-box h3 {
+    color: var(--mla-text);
+    margin: 0 0 10px;
+}
+
+.mla-login-box>p {
+    color: var(--mla-text-light);
+    margin: 0 0 20px;
+}
+
+.mla-login-button {
+    display: inline-block;
+    padding: 12px 30px;
+    background: var(--mla-primary);
+    color: var(--mla-white);
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.mla-login-button:hover {
+    background: var(--mla-primary-hover);
+    color: var(--mla-white);
+}
+
+.mla-register-link {
+    margin-top: 15px;
+    font-size: 14px;
+    color: var(--mla-text-light);
+}
+
+.mla-register-link a {
+    color: var(--mla-primary);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .mla-form-wrapper {
+        margin: 20px 0;
+        padding: 20px;
+    }
+
+    .mla-form-title {
+        font-size: 20px;
+    }
+
+    .mla-form-navigation {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .mla-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .mla-nav-spacer {
+        display: none;
+    }
+}

@@ -1,0 +1,186 @@
+# Copyright (C) 2024 SER
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Metodologia Leitor-Apreciador 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: metodologia-leitor-apreciador.php
+msgid "Metodologia Leitor-Apreciador requer PHP %s ou superior."
+msgstr ""
+
+#: metodologia-leitor-apreciador.php
+msgid "Metodologia Leitor-Apreciador requer WordPress %s ou superior."
+msgstr ""
+
+#: metodologia-leitor-apreciador.php
+msgid "Metodologia Leitor-Apreciador: Configure MLA_SUPABASE_URL e MLA_SUPABASE_ANON_KEY no wp-config.php."
+msgstr ""
+
+#: admin/class-mla-admin-menu.php
+msgid "Leitor-Apreciador"
+msgstr ""
+
+#: admin/class-mla-admin-menu.php
+msgid "Dashboard"
+msgstr ""
+
+#: admin/class-mla-admin-menu.php
+msgid "Projetos"
+msgstr ""
+
+#: admin/class-mla-admin-menu.php
+msgid "Textos"
+msgstr ""
+
+#: admin/class-mla-admin-menu.php
+msgid "Respostas"
+msgstr ""
+
+#: admin/class-mla-admin-menu.php
+msgid "Configurações"
+msgstr ""
+
+#: admin/class-mla-metabox.php
+msgid "Metodologia do Leitor-Apreciador"
+msgstr ""
+
+#: admin/class-mla-metabox.php
+msgid "Ativar Metodologia do Leitor-Apreciador"
+msgstr ""
+
+#: admin/class-mla-metabox.php
+msgid "Projeto Vinculado"
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "Compreensão Geral"
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "Identifique o tema central e os temas secundários abordados no texto. Reflita sobre a mensagem principal que o autor busca transmitir."
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "Conexões Doutrinárias"
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "Relacione o conteúdo com outros textos, doutrinas ou passagens evangélicas que você conhece. Quais conexões você percebe?"
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "Avaliação do Texto"
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "Quais aspectos positivos você identifica no texto? O que mais lhe chamou a atenção de forma construtiva?"
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "Investigação Crítica"
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "Registre suas dúvidas. Há pontos que você gostaria de compreender melhor ou que geraram questionamentos?"
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "Formulação Consciente"
+msgstr ""
+
+#: includes/class-mla-activator.php
+msgid "A partir das dúvidas identificadas, formule perguntas claras e objetivas que poderiam ser dirigidas aos autores espirituais."
+msgstr ""
+
+#: frontend/class-mla-public.php
+msgid "Salvando..."
+msgstr ""
+
+#: frontend/class-mla-public.php
+msgid "Rascunho salvo automaticamente"
+msgstr ""
+
+#: frontend/class-mla-public.php
+msgid "Erro ao salvar"
+msgstr ""
+
+#: frontend/class-mla-public.php
+msgid "Submetendo..."
+msgstr ""
+
+#: frontend/class-mla-public.php
+msgid "Apreciação submetida com sucesso!"
+msgstr ""
+
+#: frontend/class-mla-public.php
+msgid "Suas respostas poderão ser analisadas de forma coletiva e comparativa dentro do projeto. Deseja submeter?"
+msgstr ""
+
+#: frontend/class-mla-public.php
+msgid "Você já iniciou sua apreciação deste texto. Deseja continuar?"
+msgstr ""
+
+#: frontend/class-mla-public.php
+msgid "Esta edição substituirá a versão anterior para fins de análise."
+msgstr ""
+
+#: frontend/partials/form-container.php
+msgid "Sua reflexão sobre este texto contribui para a construção coletiva do conhecimento."
+msgstr ""
+
+#: frontend/partials/form-container.php
+msgid "Anterior"
+msgstr ""
+
+#: frontend/partials/form-container.php
+msgid "Próximo"
+msgstr ""
+
+#: frontend/partials/form-container.php
+msgid "Voltar e Revisar"
+msgstr ""
+
+#: frontend/partials/form-container.php
+msgid "Submeter Apreciação"
+msgstr ""
+
+#: frontend/partials/form-container.php
+msgid "Apreciação Submetida!"
+msgstr ""
+
+#: frontend/partials/form-container.php
+msgid "Sua reflexão foi registrada. Você pode retornar e aprofundar quando desejar."
+msgstr ""
+
+#: frontend/partials/form-container.php
+msgid "Editar Respostas"
+msgstr ""
+
+#: frontend/partials/login-required.php
+msgid "Participação no Estudo"
+msgstr ""
+
+#: frontend/partials/login-required.php
+msgid "Para participar da Metodologia do Leitor-Apreciador, é necessário estar conectado à sua conta."
+msgstr ""
+
+#: frontend/partials/login-required.php
+msgid "Fazer Login"
+msgstr ""
+
+#: frontend/partials/login-required.php
+msgid "Não tem conta?"
+msgstr ""
+
+#: frontend/partials/login-required.php
+msgid "Cadastre-se"
+msgstr ""
