@@ -126,7 +126,12 @@ if (!defined('WPINC')) {
         <h3>
             <?php esc_html_e('Status da Integração', 'metodologia-leitor-apreciador'); ?>
         </h3>
-        <?php if (defined('MLA_SUPABASE_URL') && defined('MLA_SUPABASE_ANON_KEY')): ?>
+        <?php
+        $settings = get_option('mla_settings', array());
+        $has_constants = defined('MLA_SUPABASE_URL') && defined('MLA_SUPABASE_ANON_KEY');
+        $has_settings = !empty($settings['supabase_url']) && !empty($settings['supabase_anon_key']);
+
+        if ($has_constants || $has_settings): ?>
             <p class="mla-status-ok">
                 <span class="dashicons dashicons-yes"></span>
                 <?php esc_html_e('Supabase configurado e pronto para uso.', 'metodologia-leitor-apreciador'); ?>
@@ -134,10 +139,10 @@ if (!defined('WPINC')) {
         <?php else: ?>
             <p class="mla-status-warning">
                 <span class="dashicons dashicons-warning"></span>
-                <?php esc_html_e('Supabase não está configurado. Configure as credenciais no wp-config.php.', 'metodologia-leitor-apreciador'); ?>
+                <?php esc_html_e('Supabase não está configurado.', 'metodologia-leitor-apreciador'); ?>
             </p>
             <a href="<?php echo esc_url(admin_url('admin.php?page=mla-settings')); ?>" class="button">
-                <?php esc_html_e('Ver Instruções', 'metodologia-leitor-apreciador'); ?>
+                <?php esc_html_e('Configurar Integração', 'metodologia-leitor-apreciador'); ?>
             </a>
         <?php endif; ?>
     </div>

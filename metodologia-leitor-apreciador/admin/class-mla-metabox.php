@@ -49,9 +49,10 @@ class MLA_Metabox
      */
     public function add_meta_boxes()
     {
-        $post_types = array('post', 'page');
+        $settings = get_option('mla_settings', array());
+        $allowed_types = isset($settings['allowed_post_types']) ? $settings['allowed_post_types'] : array('post', 'page');
 
-        foreach ($post_types as $post_type) {
+        foreach ($allowed_types as $post_type) {
             add_meta_box(
                 'mla_metodologia_settings',
                 __('Metodologia do Leitor-Apreciador', 'metodologia-leitor-apreciador'),

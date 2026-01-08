@@ -69,6 +69,14 @@ class MLA_Settings
         );
 
         add_settings_field(
+            'allowed_post_types',
+            __('Tipos de Post Permitidos', 'metodologia-leitor-apreciador'),
+            array($this, 'render_allowed_post_types_field'),
+            'mla-settings',
+            'mla_general_section'
+        );
+
+        add_settings_field(
             'submission_required',
             __('Submissão Obrigatória', 'metodologia-leitor-apreciador'),
             array($this, 'render_submission_field'),
@@ -102,6 +110,30 @@ class MLA_Settings
             __('Integração Supabase', 'metodologia-leitor-apreciador'),
             array($this, 'render_supabase_section'),
             'mla-settings'
+        );
+
+        add_settings_field(
+            'supabase_url',
+            __('URL do Projeto', 'metodologia-leitor-apreciador'),
+            array($this, 'render_supabase_url_field'),
+            'mla-settings',
+            'mla_supabase_section'
+        );
+
+        add_settings_field(
+            'supabase_anon_key',
+            __('Anon Public Key', 'metodologia-leitor-apreciador'),
+            array($this, 'render_supabase_anon_key_field'),
+            'mla-settings',
+            'mla_supabase_section'
+        );
+
+        add_settings_field(
+            'supabase_service_key',
+            __('Service Role Key', 'metodologia-leitor-apreciador'),
+            array($this, 'render_supabase_service_key_field'),
+            'mla-settings',
+            'mla_supabase_section'
         );
     }
 
@@ -239,6 +271,44 @@ class MLA_Settings
     }
 
     /**
+     * Renderiza o campo de tipos de post permitidos.
+     *
+     * @return void
+     */
+    public function render_allowed_post_types_field()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+        $allowed_types = isset($settings['allowed_post_types']) ? $settings['allowed_post_types'] : array('post', 'page');
+
+        // Obter todos os tipos de post públicos
+        $args = array(
+            'public' => true,
+        );
+        $post_types = get_post_types($args, 'objects');
+
+        echo '<fieldset>';
+        foreach ($post_types as $post_type) {
+            // Pular attachment
+            if ('attachment' === $post_type->name) {
+                continue;
+            }
+
+            printf(
+                '<label style="display:block; margin-bottom: 5px;">
+                    <input type="checkbox" name="%s[allowed_post_types][]" value="%s" %s> %s (%s)
+                </label>',
+                esc_attr(self::OPTION_KEY),
+                esc_attr($post_type->name),
+                in_array($post_type->name, $allowed_types) ? 'checked="checked"' : '',
+                esc_html($post_type->label),
+                esc_html($post_type->name)
+            );
+        }
+        echo '</fieldset>';
+        echo '<p class="description">' . esc_html__('Selecione em quais tipos de conteúdo a metodologia poderá ser ativada.', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
+    /**
      * Renderiza o campo de submissão obrigatória.
      *
      * @return void
@@ -311,6 +381,13 @@ class MLA_Settings
 
         // Progressive form
         $sanitized['progressive_form'] = isset($input['progressive_form']) ? true : false;
+
+        // Allowed Post Types
+        if (isset($input['allowed_post_types']) && is_array($input['allowed_post_types'])) {
+            $sanitized['allowed_post_types'] = array_map('sanitize_text_field', $input['allowed_post_types']);
+        } else {
+            $sanitized['allowed_post_types'] = array('post', 'page');
+        }
 
         // Submission required
         $sanitized['submission_required'] = isset($input['submission_required']) ? true : false;
