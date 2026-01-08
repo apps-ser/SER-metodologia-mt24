@@ -1,0 +1,12 @@
+Testing
+/home/thiago/Projetos/ser/SER-metodologia-mt24
+total 4
+drwxr-xr-x 1 thiago thiago 104 jan  8 00:59 .
+drwxr-xr-x 1 thiago thiago 380 jan  7 08:10 ..
+drwxr-xr-x 1 thiago thiago  40 jan  8 00:10 docs
+drwxr-xr-x 1 thiago thiago 166 jan  8 00:59 .git
+drwxr-xr-x 1 thiago thiago 198 jan  8 00:30 metodologia-leitor-apreciador
+-rw-r--r-- 1 thiago thiago  55 jan  8 00:59 test_output.txt
+origin	git@github-ser:Thiagobhmg/SER-metodologia-mt24.git (fetch)
+origin	git@github-ser:Thiagobhmg/SER-metodologia-mt24.git (push)
+You are not logged into any GitHub hosts. To log in, run: gh auth login
