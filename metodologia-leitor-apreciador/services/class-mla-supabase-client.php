@@ -64,9 +64,25 @@ class MLA_Supabase_Client
      */
     private function __construct()
     {
-        $this->base_url = defined('MLA_SUPABASE_URL') ? MLA_SUPABASE_URL : '';
-        $this->anon_key = defined('MLA_SUPABASE_ANON_KEY') ? MLA_SUPABASE_ANON_KEY : '';
-        $this->service_key = defined('MLA_SUPABASE_SERVICE_KEY') ? MLA_SUPABASE_SERVICE_KEY : '';
+        $settings = get_option('mla_settings', array());
+
+        // Configuração via Settings (Banco de Dados)
+        $this->base_url = isset($settings['supabase_url']) ? $settings['supabase_url'] : '';
+        $this->anon_key = isset($settings['supabase_anon_key']) ? $settings['supabase_anon_key'] : '';
+        $this->service_key = isset($settings['supabase_service_key']) ? $settings['supabase_service_key'] : '';
+
+        // Constantes (wp-config.php) têm prioridade (override)
+        if (defined('MLA_SUPABASE_URL') && MLA_SUPABASE_URL) {
+            $this->base_url = MLA_SUPABASE_URL;
+        }
+
+        if (defined('MLA_SUPABASE_ANON_KEY') && MLA_SUPABASE_ANON_KEY) {
+            $this->anon_key = MLA_SUPABASE_ANON_KEY;
+        }
+
+        if (defined('MLA_SUPABASE_SERVICE_KEY') && MLA_SUPABASE_SERVICE_KEY) {
+            $this->service_key = MLA_SUPABASE_SERVICE_KEY;
+        }
     }
 
     /**

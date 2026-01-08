@@ -16,7 +16,17 @@ Plugin WordPress para implementar a Metodologia do Leitor-Apreciador, permitindo
 
 ## Configuração do Supabase
 
-### 1. Adicionar credenciais no wp-config.php
+### 1. Configurar no Painel Admin (Recomendado)
+
+Após ativar o plugin:
+1. Vá em **Leitor-Apreciador > Configurações**.
+2. Role até a seção "Integração Supabase".
+3. Preencha os campos `URL do Projeto`, `Anon Public Key` e opcionalmente `Service Role Key`.
+4. Salve as alterações.
+
+### 2. Configurar via wp-config.php (Opcional/Override)
+
+Você também pode definir as constantes no `wp-config.php`. Se definidas, elas terão prioridade sobre as configurações do painel.
 
 ```php
 // Metodologia Leitor-Apreciador - Supabase

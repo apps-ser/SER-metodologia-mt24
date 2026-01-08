@@ -17,76 +17,84 @@
  */
 
 // Se este arquivo for chamado diretamente, abortar.
-if ( ! defined( 'WPINC' ) ) {
+if (!defined('WPINC')) {
     die;
 }
 
 /**
  * Versão atual do plugin.
  */
-define( 'MLA_VERSION', '1.0.0' );
+define('MLA_VERSION', '1.0.0');
 
 /**
  * Caminho absoluto do diretório do plugin.
  */
-define( 'MLA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define('MLA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 /**
  * URL base do plugin.
  */
-define( 'MLA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define('MLA_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 /**
  * Basename do plugin.
  */
-define( 'MLA_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+define('MLA_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 /**
  * Verificar requisitos mínimos.
  *
  * @return bool True se os requisitos forem atendidos.
  */
-function mla_check_requirements() {
+function mla_check_requirements()
+{
     $php_version = '7.4.33';
-    $wp_version  = '6.5.7';
+    $wp_version = '6.5.7';
 
-    if ( version_compare( PHP_VERSION, $php_version, '<' ) ) {
-        add_action( 'admin_notices', function() use ( $php_version ) {
+    if (version_compare(PHP_VERSION, $php_version, '<')) {
+        add_action('admin_notices', function () use ($php_version) {
             printf(
                 '<div class="notice notice-error"><p>%s</p></div>',
                 sprintf(
                     /* translators: %s: Versão mínima do PHP */
-                    esc_html__( 'Metodologia Leitor-Apreciador requer PHP %s ou superior.', 'metodologia-leitor-apreciador' ),
-                    esc_html( $php_version )
+                    esc_html__('Metodologia Leitor-Apreciador requer PHP %s ou superior.', 'metodologia-leitor-apreciador'),
+                    esc_html($php_version)
                 )
             );
-        } );
+        });
         return false;
     }
 
     global $wp_version;
-    if ( version_compare( $wp_version, $wp_version, '<' ) ) {
-        add_action( 'admin_notices', function() use ( $wp_version ) {
+    if (version_compare($wp_version, $wp_version, '<')) {
+        add_action('admin_notices', function () use ($wp_version) {
             printf(
                 '<div class="notice notice-error"><p>%s</p></div>',
                 sprintf(
                     /* translators: %s: Versão mínima do WordPress */
-                    esc_html__( 'Metodologia Leitor-Apreciador requer WordPress %s ou superior.', 'metodologia-leitor-apreciador' ),
-                    esc_html( $wp_version )
+                    esc_html__('Metodologia Leitor-Apreciador requer WordPress %s ou superior.', 'metodologia-leitor-apreciador'),
+                    esc_html($wp_version)
                 )
             );
-        } );
+        });
         return false;
     }
 
-    // Verificar se as constantes do Supabase estão definidas
-    if ( ! defined( 'MLA_SUPABASE_URL' ) || ! defined( 'MLA_SUPABASE_ANON_KEY' ) ) {
-        add_action( 'admin_notices', function() {
+    // Verificar se as credenciais do Supabase estão configuradas (via constantes ou opções)
+    $settings = get_option('mla_settings', array());
+    $has_settings = !empty($settings['supabase_url']) && !empty($settings['supabase_anon_key']);
+    $has_constants = defined('MLA_SUPABASE_URL') && defined('MLA_SUPABASE_ANON_KEY');
+
+    if (!$has_constants && !$has_settings) {
+        add_action('admin_notices', function () {
             printf(
-                '<div class="notice notice-warning"><p>%s</p></div>',
-                esc_html__( 'Metodologia Leitor-Apreciador: Configure MLA_SUPABASE_URL e MLA_SUPABASE_ANON_KEY no wp-config.php.', 'metodologia-leitor-apreciador' )
+                '<div class="notice notice-warning"><p>%s <a href="%s">%s</a> %s</p></div>',
+                esc_html__('Metodologia Leitor-Apreciador: Supabase não está configurado.', 'metodologia-leitor-apreciador'),
+                esc_url(admin_url('admin.php?page=mla-settings')),
+                esc_html__('Acesse as Configurações', 'metodologia-leitor-apreciador'),
+                esc_html__('ou defina as constantes no wp-config.php.', 'metodologia-leitor-apreciador')
             );
-        } );
+        });
         // Não bloquear a ativação, apenas avisar
     }
 
@@ -96,7 +104,8 @@ function mla_check_requirements() {
 /**
  * Código executado durante a ativação do plugin.
  */
-function mla_activate() {
+function mla_activate()
+{
     require_once MLA_PLUGIN_DIR . 'includes/class-mla-activator.php';
     MLA_Activator::activate();
 }
@@ -104,18 +113,20 @@ function mla_activate() {
 /**
  * Código executado durante a desativação do plugin.
  */
-function mla_deactivate() {
+function mla_deactivate()
+{
     require_once MLA_PLUGIN_DIR . 'includes/class-mla-activator.php';
     MLA_Activator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'mla_activate' );
-register_deactivation_hook( __FILE__, 'mla_deactivate' );
+register_activation_hook(__FILE__, 'mla_activate');
+register_deactivation_hook(__FILE__, 'mla_deactivate');
 
 /**
  * Carregar classes do plugin.
  */
-function mla_load_classes() {
+function mla_load_classes()
+{
     // Includes
     require_once MLA_PLUGIN_DIR . 'includes/class-mla-loader.php';
     require_once MLA_PLUGIN_DIR . 'includes/class-mla-i18n.php';
@@ -144,8 +155,9 @@ function mla_load_classes() {
 /**
  * Inicializar o plugin.
  */
-function mla_init() {
-    if ( ! mla_check_requirements() ) {
+function mla_init()
+{
+    if (!mla_check_requirements()) {
         return;
     }
 
@@ -156,33 +168,33 @@ function mla_init() {
 
     // Internacionalização
     $i18n = new MLA_I18n();
-    $loader->add_action( 'plugins_loaded', $i18n, 'load_plugin_textdomain' );
+    $loader->add_action('plugins_loaded', $i18n, 'load_plugin_textdomain');
 
     // Admin
-    if ( is_admin() ) {
+    if (is_admin()) {
         $admin = new MLA_Admin();
-        $loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_styles' );
-        $loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_scripts' );
+        $loader->add_action('admin_enqueue_scripts', $admin, 'enqueue_styles');
+        $loader->add_action('admin_enqueue_scripts', $admin, 'enqueue_scripts');
 
         $admin_menu = new MLA_Admin_Menu();
-        $loader->add_action( 'admin_menu', $admin_menu, 'add_menu_pages' );
+        $loader->add_action('admin_menu', $admin_menu, 'add_menu_pages');
 
         $metabox = new MLA_Metabox();
-        $loader->add_action( 'add_meta_boxes', $metabox, 'add_meta_boxes' );
-        $loader->add_action( 'save_post', $metabox, 'save_meta_box_data' );
+        $loader->add_action('add_meta_boxes', $metabox, 'add_meta_boxes');
+        $loader->add_action('save_post', $metabox, 'save_meta_box_data');
     }
 
     // Frontend
     $public = new MLA_Public();
-    $loader->add_filter( 'the_content', $public, 'append_form_to_content', 99 );
-    $loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_styles' );
-    $loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_scripts' );
+    $loader->add_filter('the_content', $public, 'append_form_to_content', 99);
+    $loader->add_action('wp_enqueue_scripts', $public, 'enqueue_styles');
+    $loader->add_action('wp_enqueue_scripts', $public, 'enqueue_scripts');
 
     // REST API
-    $loader->add_action( 'rest_api_init', $public, 'register_rest_routes' );
+    $loader->add_action('rest_api_init', $public, 'register_rest_routes');
 
     // Executar todos os hooks
     $loader->run();
 }
 
-add_action( 'plugins_loaded', 'mla_init' );
+add_action('plugins_loaded', 'mla_init');

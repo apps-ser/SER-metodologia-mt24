@@ -147,22 +147,58 @@ class MLA_Settings
      */
     public function render_supabase_section()
     {
-        $configured = defined('MLA_SUPABASE_URL') && defined('MLA_SUPABASE_ANON_KEY');
+        echo '<p>' . esc_html__('Configure as credenciais do seu projeto Supabase.', 'metodologia-leitor-apreciador') . '</p>';
 
-        if ($configured) {
-            echo '<div class="notice notice-success inline"><p>';
-            echo esc_html__('Supabase está configurado.', 'metodologia-leitor-apreciador');
-            echo ' <strong>URL:</strong> ' . esc_html(MLA_SUPABASE_URL);
-            echo '</p></div>';
-        } else {
+        if (defined('MLA_SUPABASE_URL') && defined('MLA_SUPABASE_ANON_KEY')) {
             echo '<div class="notice notice-warning inline"><p>';
-            echo esc_html__('Configure as credenciais do Supabase no arquivo wp-config.php:', 'metodologia-leitor-apreciador');
-            echo '</p><pre>';
-            echo "define( 'MLA_SUPABASE_URL', 'https://seu-projeto.supabase.co' );\n";
-            echo "define( 'MLA_SUPABASE_ANON_KEY', 'sua-chave-anon' );\n";
-            echo "define( 'MLA_SUPABASE_SERVICE_KEY', 'sua-chave-service' ); // Opcional, para admin";
-            echo '</pre></div>';
+            echo esc_html__('Atenção: As constantes MLA_SUPABASE_URL e MLA_SUPABASE_ANON_KEY estão definidas no wp-config.php e terão prioridade sobre estas configurações.', 'metodologia-leitor-apreciador');
+            echo '</p></div>';
         }
+    }
+
+    /**
+     * Renderiza o campo de URL do Supabase.
+     */
+    public function render_supabase_url_field()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+        $value = isset($settings['supabase_url']) ? $settings['supabase_url'] : '';
+        printf(
+            '<input type="url" name="%s[supabase_url]" value="%s" class="regular-text code">',
+            esc_attr(self::OPTION_KEY),
+            esc_attr($value)
+        );
+        echo '<p class="description">' . esc_html__('Ex: https://seubrojeto.supabase.co', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
+    /**
+     * Renderiza o campo de Anon Key.
+     */
+    public function render_supabase_anon_key_field()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+        $value = isset($settings['supabase_anon_key']) ? $settings['supabase_anon_key'] : '';
+        printf(
+            '<input type="password" name="%s[supabase_anon_key]" value="%s" class="regular-text code">',
+            esc_attr(self::OPTION_KEY),
+            esc_attr($value)
+        );
+        echo '<p class="description">' . esc_html__('Chave pública (anon/public).', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
+    /**
+     * Renderiza o campo de Service Key.
+     */
+    public function render_supabase_service_key_field()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+        $value = isset($settings['supabase_service_key']) ? $settings['supabase_service_key'] : '';
+        printf(
+            '<input type="password" name="%s[supabase_service_key]" value="%s" class="regular-text code">',
+            esc_attr(self::OPTION_KEY),
+            esc_attr($value)
+        );
+        echo '<p class="description">' . esc_html__('Chave secreta (service_role). Opcional, usada apenas para operações administrativas.', 'metodologia-leitor-apreciador') . '</p>';
     }
 
     /**
@@ -293,6 +329,19 @@ class MLA_Settings
                     );
                 }
             }
+        }
+
+        // Supabase Settings
+        if (isset($input['supabase_url'])) {
+            $sanitized['supabase_url'] = esc_url_raw($input['supabase_url']);
+        }
+
+        if (isset($input['supabase_anon_key'])) {
+            $sanitized['supabase_anon_key'] = sanitize_text_field($input['supabase_anon_key']);
+        }
+
+        if (isset($input['supabase_service_key'])) {
+            $sanitized['supabase_service_key'] = sanitize_text_field($input['supabase_service_key']);
         }
 
         return $sanitized;

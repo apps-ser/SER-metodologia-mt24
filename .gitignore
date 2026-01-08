@@ -1,0 +1,15 @@
+.env.local
+node_modules/
+.DS_Store
+*.log
+push_error.txt
+push_org_error.txt
+push_options_error.txt
+create_repo_error.txt
+gh_create_ssh_error.txt
+gh_list_error.txt
+ssh_check.txt
+git_config_check.txt
+log_check.txt
+test_output.txt
+.remote_url_temp
