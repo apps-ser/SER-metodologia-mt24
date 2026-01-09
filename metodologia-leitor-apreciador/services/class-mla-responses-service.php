@@ -140,7 +140,6 @@ class MLA_Responses_Service
     public function save_draft($data)
     {
         $sanitized = $this->sanitize_data($data);
-        $sanitized['status'] = 'draft';
         $sanitized['updated_at'] = current_time('c');
 
         // Verificar se já existe resposta
@@ -151,17 +150,27 @@ class MLA_Responses_Service
         }
 
         if ($existing) {
-            // Atualizar rascunho existente
+            $update_data = array(
+                'updated_at' => $sanitized['updated_at'],
+            );
+
+            // Se a resposta já foi submetida, salvamos as novas alterações no campo draft_data
+            // para não sobrescrever a versão oficial até que ele submeta novamente.
+            if ('submitted' === $existing['status']) {
+                $update_data['draft_data'] = $sanitized['data'];
+            } else {
+                // Se ainda é um rascunho, atualizamos o campo data principal normalmente.
+                $update_data['data'] = $sanitized['data'];
+            }
+
             $result = $this->client->patch(self::TABLE_NAME, array(
                 'id' => 'eq.' . $existing['id'],
-            ), array(
-                'data' => $sanitized['data'],
-                'updated_at' => $sanitized['updated_at'],
-            ), true);
+            ), $update_data, true);
 
             return is_array($result) && isset($result[0]) ? $result[0] : $result;
         } else {
             // Criar novo rascunho
+            $sanitized['status'] = 'draft';
             $sanitized['version'] = 1;
             $result = $this->client->post(self::TABLE_NAME, $sanitized, true);
             return is_array($result) && isset($result[0]) ? $result[0] : $result;
@@ -187,6 +196,11 @@ class MLA_Responses_Service
             return new WP_Error('mla_not_found', __('Resposta não encontrada.', 'metodologia-leitor-apreciador'));
         }
 
+        $update_data = array(
+            'status' => 'submitted',
+            'updated_at' => current_time('c'),
+        );
+
         // Se já foi submetida antes, incrementar versão e salvar histórico
         if ('submitted' === $existing['status']) {
             // Salvar versão anterior no histórico
@@ -194,18 +208,22 @@ class MLA_Responses_Service
 
             // Incrementar versão
             $new_version = intval($existing['version']) + 1;
+
+            // Se houver um rascunho pendente (draft_data), ele se torna a versão oficial
+            if (!empty($existing['draft_data'])) {
+                $update_data['data'] = $existing['draft_data'];
+                $update_data['draft_data'] = null; // Limpa o rascunho após submeter
+            }
         } else {
             $new_version = 1;
         }
 
+        $update_data['version'] = $new_version;
+
         // Atualizar para submetida
         $result = $this->client->patch(self::TABLE_NAME, array(
             'id' => 'eq.' . $id,
-        ), array(
-            'status' => 'submitted',
-            'version' => $new_version,
-            'updated_at' => current_time('c'),
-        ), true);
+        ), $update_data, true);
 
         return is_array($result) && isset($result[0]) ? $result[0] : $result;
     }

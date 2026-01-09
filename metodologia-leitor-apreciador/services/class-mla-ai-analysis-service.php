@@ -56,28 +56,45 @@ class MLA_AI_Analysis_Service
             'created_at' => current_time('c'),
         );
 
-        return $this->client->post(self::TABLE_NAME, $data, true);
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('MLA Save Analysis attempt: text_id=' . $text_id . ', model=' . $model);
+        }
+
+        $result = $this->client->post(self::TABLE_NAME, $data, true);
+
+        if (is_wp_error($result)) {
+            error_log('MLA Save Analysis FAILED: ' . $result->get_error_message());
+        } else {
+            error_log('MLA Save Analysis SUCCESS');
+        }
+
+        return $result;
     }
 
     /**
-     * Obtém a análise mais recente de um texto.
+     * Obtém todas as análises de um texto específico.
      *
      * @param string $text_id ID do texto.
      *
-     * @return array|null|WP_Error Análise ou null se não encontrada.
+     * @return array|WP_Error Lista de análises ou erro.
      */
-    public function get_latest_by_text($text_id)
+    public function get_all_by_text($text_id)
     {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('MLA Fetch Analysis attempt: text_id=' . $text_id);
+        }
+
         $result = $this->client->get(self::TABLE_NAME, array(
             'text_id' => 'eq.' . $text_id,
-            'order' => 'created_at.desc',
-            'limit' => 1
+            'order' => 'created_at.desc'
         ), true);
 
         if (is_wp_error($result)) {
-            return $result;
+            error_log('MLA Fetch Analysis FAILED: ' . $result->get_error_message());
+        } else {
+            error_log('MLA Fetch Analysis SUCCESS: Found ' . (is_array($result) ? count($result) : 0) . ' records');
         }
 
-        return !empty($result[0]) ? $result[0] : null;
+        return $result;
     }
 }

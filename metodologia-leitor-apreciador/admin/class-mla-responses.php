@@ -42,6 +42,7 @@ class MLA_Responses
 
         // AJAX para Análise de IA
         add_action('wp_ajax_mla_analyze_responses', array($this, 'ajax_analyze_responses'));
+        add_action('wp_ajax_mla_get_texts_by_project', array($this, 'ajax_get_texts_by_project'));
     }
 
     /**
@@ -62,6 +63,9 @@ class MLA_Responses
         switch ($view) {
             case 'detail':
                 $this->render_detail();
+                break;
+            case 'analyses':
+                $this->render_analyses();
                 break;
             default:
                 $this->render_list();
@@ -100,7 +104,7 @@ class MLA_Responses
         $projects = $this->projects_service->get_for_select();
 
         // Obter textos para filtro
-        $texts = $this->get_texts_for_filter();
+        $texts = $this->get_texts_for_filter($filters['project_id']);
 
         // Calcular páginas
         $total_pages = ceil($total / $limit);
@@ -175,13 +179,42 @@ class MLA_Responses
 
             $analysis_data[] = array(
                 'leitor' => $reader_name,
-                'respostas' => $resp['content']
+                'respostas' => $resp['data'] // Corrigido de content para data
             );
         }
 
-        // 3. Chamar o serviço de IA
+        // 3. Buscar contexto adicional (Texto Original e Metodologia)
+        $settings = get_option('mla_settings', array());
+
+        // Obter tipos de post permitidos das configurações
+        $allowed_post_types = isset($settings['allowed_post_types']) ? $settings['allowed_post_types'] : array('post', 'page');
+
+        // Texto Original
+        $original_text = '';
+        $text_query = new WP_Query(array(
+            'post_type' => $allowed_post_types,
+            'posts_per_page' => 1,
+            'meta_query' => array(
+                array(
+                    'key' => '_mla_text_id',
+                    'value' => $text_id,
+                    'compare' => '=',
+                ),
+            ),
+        ));
+
+        if ($text_query->have_posts()) {
+            $original_text = $text_query->posts[0]->post_content;
+        }
+
+        $context = array(
+            'methodology' => isset($settings['methodology_explanation']) ? $settings['methodology_explanation'] : '',
+            'original_text' => $original_text
+        );
+
+        // 4. Chamar o serviço de IA
         $ai_service = new MLA_AI_Service();
-        $result = $ai_service->analyze_responses($analysis_data);
+        $result = $ai_service->analyze_responses($analysis_data, $context);
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));
@@ -195,32 +228,103 @@ class MLA_Responses
         $persist_result = $analysis_persist_service->save($text_id, $result, $model);
 
         if (is_wp_error($persist_result)) {
-            // Log do erro de persistência, mas retorna o resultado da IA para o usuário
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MLA AI Persistence Error: ' . $persist_result->get_error_message());
-            }
+            // Log do erro de persistência
+            error_log('MLA AI Persistence Error for text_id ' . $text_id . ': ' . $persist_result->get_error_message());
         }
 
         wp_send_json_success(array('content' => $result));
     }
 
     /**
+     * Handler AJAX para obter textos de um projeto.
+     */
+    public function ajax_get_texts_by_project()
+    {
+        check_ajax_referer('mla_admin_nonce', 'nonce');
+
+        $project_id = isset($_POST['project_id']) ? sanitize_text_field(wp_unslash($_POST['project_id'])) : '';
+        $texts = $this->get_texts_for_filter($project_id);
+
+        wp_send_json_success(array('texts' => $texts));
+    }
+
+    /**
+     * Renderiza o histórico de análises de IA.
+     */
+    private function render_analyses()
+    {
+        error_log('MLA Debug: render_analyses called. GET params: ' . print_r($_GET, true));
+        try {
+            $text_id = isset($_GET['text_id']) ? sanitize_text_field(wp_unslash($_GET['text_id'])) : '';
+
+            if (empty($text_id)) {
+                wp_die(esc_html__('ID do texto não informado.', 'metodologia-leitor-apreciador'));
+            }
+
+            // Obter tipos de post permitidos das configurações
+            $settings = get_option('mla_settings', array());
+            $allowed_post_types = isset($settings['allowed_post_types']) ? $settings['allowed_post_types'] : array('post', 'page');
+
+            // Obter título do texto
+            $text_title = __('Texto não encontrado', 'metodologia-leitor-apreciador');
+            $text_query = new WP_Query(array(
+                'post_type' => $allowed_post_types,
+                'posts_per_page' => 1,
+                'no_found_rows' => true,
+                'meta_query' => array(
+                    array(
+                        'key' => '_mla_text_id',
+                        'value' => $text_id,
+                        'compare' => '=',
+                    ),
+                ),
+            ));
+
+            if ($text_query->have_posts()) {
+                $text_title = $text_query->posts[0]->post_title;
+            }
+
+            $analysis_service = new MLA_AI_Analysis_Service();
+            $analyses = $analysis_service->get_all_by_text($text_id);
+
+            include MLA_PLUGIN_DIR . 'admin/partials/responses-analyses.php';
+        } catch (Exception $e) {
+            wp_die(esc_html__('Erro ao carregar histórico: ', 'metodologia-leitor-apreciador') . esc_html($e->getMessage()));
+        }
+    }
+
+    /**
      * Obtém textos para o filtro de seleção.
      *
+     * @param string $project_id Opcional. ID do projeto para filtrar.
      * @return array Lista de textos (post_id => título).
      */
-    private function get_texts_for_filter()
+    private function get_texts_for_filter($project_id = '')
     {
-        $args = array(
-            'post_type' => array('post', 'page'),
-            'posts_per_page' => 100,
-            'meta_query' => array(
-                array(
-                    'key' => '_mla_enabled',
-                    'value' => '1',
-                    'compare' => '=',
-                ),
+        // Obter tipos de post permitidos das configurações
+        $settings = get_option('mla_settings', array());
+        $allowed_post_types = isset($settings['allowed_post_types']) ? $settings['allowed_post_types'] : array('post', 'page');
+
+        $meta_query = array(
+            array(
+                'key' => '_mla_enabled',
+                'value' => '1',
+                'compare' => '=',
             ),
+        );
+
+        if (!empty($project_id)) {
+            $meta_query[] = array(
+                'key' => '_mla_project_id',
+                'value' => $project_id,
+                'compare' => '=',
+            );
+        }
+
+        $args = array(
+            'post_type' => $allowed_post_types,
+            'posts_per_page' => 100,
+            'meta_query' => $meta_query
         );
 
         $query = new WP_Query($args);

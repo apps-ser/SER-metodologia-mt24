@@ -111,14 +111,11 @@ class MLA_Metabox
         }
 
         // Verificar permissões
-        if (isset($_POST['post_type']) && 'page' === $_POST['post_type']) {
-            if (!current_user_can('edit_page', $post_id)) {
-                return;
-            }
-        } else {
-            if (!current_user_can('edit_post', $post_id)) {
-                return;
-            }
+        $post_type_object = get_post_type_object(get_post_type($post_id));
+        $capability = $post_type_object ? $post_type_object->cap->edit_post : 'edit_post';
+
+        if (!current_user_can($capability, $post_id)) {
+            return;
         }
 
         // Processar checkbox de ativação

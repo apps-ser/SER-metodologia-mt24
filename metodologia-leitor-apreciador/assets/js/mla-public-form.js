@@ -175,10 +175,13 @@
                     var data = response.response;
                     state.responseId = data.id;
                     state.status = data.status;
-                    state.lastSavedData = data.data;
+
+                    // Prioriza draft_data (rascunho de edição de algo já submetido)
+                    var displayData = data.draft_data || data.data;
+                    state.lastSavedData = displayData;
 
                     // Preencher campos
-                    fillFormData(data.data);
+                    fillFormData(displayData);
 
                     // Mostrar aviso se já submetida
                     if (data.status === 'submitted') {
@@ -458,22 +461,53 @@
      * Submeter resposta
      */
     function submitResponse() {
-        // Salvar primeiro
-        saveResponse();
+        var formData = collectFormData();
 
-        if (!state.responseId) {
-            showToast('Aguarde o salvamento do rascunho.', 'info');
-            return;
-        }
+        // Mostrar carregando no botão
+        $btnSubmit.prop('disabled', true).text(mlaSettings.i18n.submitting);
 
+        // Primeiro garante que o rascunho mais atual está salvo
+        $.ajax({
+            url: mlaSettings.restUrl + 'responses',
+            method: 'POST',
+            headers: {
+                'X-WP-Nonce': mlaSettings.nonce,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({
+                text_id: mlaSettings.textId,
+                project_id: mlaSettings.projectId || null,
+                data: formData
+            }),
+            success: function (response) {
+                if (response.success) {
+                    state.responseId = response.response.id || state.responseId;
+                    state.lastSavedData = formData;
+                    state.isDirty = false;
+
+                    // Agora sim, procede com a submissão
+                    proceedToSubmit();
+                } else {
+                    showToast(mlaSettings.i18n.error, 'error');
+                    $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+                }
+            },
+            error: function () {
+                showToast(mlaSettings.i18n.error, 'error');
+                $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+            }
+        });
+    }
+
+    /**
+     * Procede com a submissão final após garantir o rascunho
+     */
+    function proceedToSubmit() {
         // Confirmar submissão com Modal Customizado
         showConfirm(
             'Confirmar Submissão',
             mlaSettings.i18n.confirmSubmit,
             function () {
-                // Callback de confirmação
-                $btnSubmit.prop('disabled', true).text(mlaSettings.i18n.submitting);
-
                 $.ajax({
                     url: mlaSettings.restUrl + 'responses/' + state.responseId + '/submit',
                     method: 'POST',
@@ -495,6 +529,10 @@
                         $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
                     }
                 });
+            },
+            function () {
+                // Se cancelar a confirmação, reabilitar o botão
+                $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
             }
         );
     }

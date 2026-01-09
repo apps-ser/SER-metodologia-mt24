@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS public.responses (
     wp_user_email TEXT,
     project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
     data JSONB NOT NULL DEFAULT '{}'::jsonb,
+    draft_data JSONB DEFAULT NULL,
     status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'submitted')),
     version INTEGER DEFAULT 1,
     created_at TIMESTAMPTZ DEFAULT now(),

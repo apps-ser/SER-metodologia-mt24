@@ -34,6 +34,44 @@ class MLA_Activator
                 'progressive_form' => true,
                 'submission_required' => false,
                 'step_texts' => self::get_default_step_texts(),
+                'step_templates' => array(
+                    array(
+                        'id' => 'tpl_default',
+                        'name' => 'Metodologia Leitor-Apreciador (Padrão)',
+                        'steps' => array(
+                            array(
+                                'key' => 'tema_central',
+                                'title' => 'Tema Central',
+                                'description' => 'Identifique e descreva de forma concisa a ideia principal que o texto busca transmitir.'
+                            ),
+                            array(
+                                'key' => 'temas_subsidiarios',
+                                'title' => 'Temas Subsidiários',
+                                'description' => 'Aponte outros assuntos ou ideias secundárias que apoiam e complementam o tema central.'
+                            ),
+                            array(
+                                'key' => 'correlacoes_doutrinarias',
+                                'title' => 'Correlações Doutrinárias',
+                                'description' => 'Relacione este conteúdo com outros textos, obras ou passagens evangélicas de seu conhecimento.'
+                            ),
+                            array(
+                                'key' => 'aspectos_positivos',
+                                'title' => 'Aspectos Positivos',
+                                'description' => 'Quais ensinamentos e pontos fortes você destaca neste texto? O que foi mais valioso para você?'
+                            ),
+                            array(
+                                'key' => 'duvidas',
+                                'title' => 'Dúvidas',
+                                'description' => 'Exponha os pontos que não ficaram totalmente claros ou que geraram algum tipo de estranhamento ou dúvida.'
+                            ),
+                            array(
+                                'key' => 'perguntas_autores',
+                                'title' => 'Perguntas para os Autores',
+                                'description' => 'A partir de suas dúvidas, formule perguntas profundas baseadas fielmente no texto. ATENÇÃO: Perguntas fora de contexto ou alheias ao texto serão excluídas da análise.'
+                            ),
+                        )
+                    )
+                ),
             );
             add_option('mla_settings', $default_settings);
         }
@@ -78,25 +116,29 @@ class MLA_Activator
     private static function get_default_step_texts()
     {
         return array(
-            'step_1' => array(
-                'title' => __('Compreensão Geral', 'metodologia-leitor-apreciador'),
-                'description' => __('Identifique o tema central e os temas secundários abordados no texto. Reflita sobre a mensagem principal que o autor busca transmitir.', 'metodologia-leitor-apreciador'),
+            'tema_central' => array(
+                'title' => __('Tema Central', 'metodologia-leitor-apreciador'),
+                'description' => __('Identifique e descreva de forma concisa a ideia principal que o texto busca transmitir.', 'metodologia-leitor-apreciador'),
             ),
-            'step_2' => array(
-                'title' => __('Conexões Doutrinárias', 'metodologia-leitor-apreciador'),
-                'description' => __('Relacione o conteúdo com outros textos, doutrinas ou passagens evangélicas que você conhece. Quais conexões você percebe?', 'metodologia-leitor-apreciador'),
+            'temas_subsidiarios' => array(
+                'title' => __('Temas Subsidiários', 'metodologia-leitor-apreciador'),
+                'description' => __('Aponte outros assuntos ou ideias secundárias que apoiam e complementam o tema central.', 'metodologia-leitor-apreciador'),
             ),
-            'step_3' => array(
-                'title' => __('Avaliação do Texto', 'metodologia-leitor-apreciador'),
-                'description' => __('Quais aspectos positivos você identifica no texto? O que mais lhe chamou a atenção de forma construtiva?', 'metodologia-leitor-apreciador'),
+            'correlacoes_doutrinarias' => array(
+                'title' => __('Correlações Doutrinárias', 'metodologia-leitor-apreciador'),
+                'description' => __('Relacione este conteúdo com outros textos, obras ou passagens evangélicas de seu conhecimento.', 'metodologia-leitor-apreciador'),
             ),
-            'step_4' => array(
-                'title' => __('Investigação Crítica', 'metodologia-leitor-apreciador'),
-                'description' => __('Registre suas dúvidas. Há pontos que você gostaria de compreender melhor ou que geraram questionamentos?', 'metodologia-leitor-apreciador'),
+            'aspectos_positivos' => array(
+                'title' => __('Aspectos Positivos', 'metodologia-leitor-apreciador'),
+                'description' => __('Quais ensinamentos e pontos fortes você destaca neste texto? O que foi mais valioso para você?', 'metodologia-leitor-apreciador'),
             ),
-            'step_5' => array(
-                'title' => __('Formulação Consciente', 'metodologia-leitor-apreciador'),
-                'description' => __('A partir das dúvidas identificadas, formule perguntas claras e objetivas que poderiam ser dirigidas aos autores espirituais.', 'metodologia-leitor-apreciador'),
+            'duvidas' => array(
+                'title' => __('Dúvidas', 'metodologia-leitor-apreciador'),
+                'description' => __('Exponha os pontos que não ficaram totalmente claros ou que geraram algum tipo de estranhamento ou dúvida.', 'metodologia-leitor-apreciador'),
+            ),
+            'perguntas_autores' => array(
+                'title' => __('Perguntas para os Autores', 'metodologia-leitor-apreciador'),
+                'description' => __('A partir de suas dúvidas, formule perguntas profundas baseadas fielmente no texto. ATENÇÃO: Perguntas fora de contexto ou alheias ao texto serão excluídas da análise.', 'metodologia-leitor-apreciador'),
             ),
         );
     }

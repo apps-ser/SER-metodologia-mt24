@@ -20,12 +20,22 @@ if (!defined('WPINC')) {
         <form method="get" action="">
             <input type="hidden" name="page" value="mla-responses">
             <div class="alignleft actions">
-                <select name="project_id">
+                <select name="project_id" id="mla-filter-project">
                     <option value="">
                         <?php esc_html_e('Todos os projetos', 'metodologia-leitor-apreciador'); ?>
                     </option>
                     <?php foreach ($projects as $id => $name): ?>
                         <option value="<?php echo esc_attr($id); ?>" <?php selected($filters['project_id'], $id); ?>>
+                            <?php echo esc_html($name); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="text_id" id="mla-filter-text">
+                    <option value="">
+                        <?php esc_html_e('Todos os textos', 'metodologia-leitor-apreciador'); ?>
+                    </option>
+                    <?php foreach ($texts as $id => $name): ?>
+                        <option value="<?php echo esc_attr($id); ?>" <?php selected($filters['text_id'], $id); ?>>
                             <?php echo esc_html($name); ?>
                         </option>
                     <?php endforeach; ?>
@@ -46,14 +56,21 @@ if (!defined('WPINC')) {
                 </button>
             </div>
             <div class="alignright">
-                <?php if (!empty($filters['text_id'])): ?>
-                    <button type="button" id="mla-analyze-ia" class="button button-primary"
-                        data-text-id="<?php echo esc_attr($filters['text_id']); ?>">
-                        <span class="dashicons dashicons-admin-appearance" style="margin-top:4px;"></span>
-                        <?php esc_html_e('Analisar com IA', 'metodologia-leitor-apreciador'); ?>
-                    </button>
-                    |
-                <?php endif; ?>
+                <?php
+                $has_text = !empty($filters['text_id']);
+                $history_url = $has_text ? admin_url('admin.php?page=mla-responses&view=analyses&text_id=' . $filters['text_id']) : '#';
+                ?>
+                <button type="button" id="mla-analyze-ia" class="button button-primary"
+                    data-text-id="<?php echo esc_attr($filters['text_id']); ?>" <?php echo $has_text ? '' : 'disabled="disabled"'; ?>>
+                    <span class="dashicons dashicons-admin-appearance" style="margin-top:4px;"></span>
+                    <?php esc_html_e('Analisar com IA', 'metodologia-leitor-apreciador'); ?>
+                </button>
+                <a href="<?php echo esc_url($history_url); ?>" id="mla-view-history"
+                    class="button <?php echo $has_text ? '' : 'disabled'; ?>" <?php echo $has_text ? '' : 'style="pointer-events: none; opacity: 0.5;"'; ?>>
+                    <span class="dashicons dashicons-backup" style="margin-top:4px;"></span>
+                    <?php esc_html_e('Ver Histórico', 'metodologia-leitor-apreciador'); ?>
+                </a>
+                |
                 <a href="<?php echo esc_url(MLA_Export::get_export_url('csv', $filters)); ?>" class="button">
                     <?php esc_html_e('Exportar CSV', 'metodologia-leitor-apreciador'); ?>
                 </a>

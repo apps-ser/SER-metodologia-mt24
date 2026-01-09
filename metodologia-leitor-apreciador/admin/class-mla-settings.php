@@ -186,6 +186,14 @@ class MLA_Settings
             'mla-settings',
             'mla_ai_section'
         );
+
+        add_settings_field(
+            'methodology_explanation',
+            __('Explicação da Metodologia', 'metodologia-leitor-apreciador'),
+            array($this, 'render_methodology_explanation_field'),
+            'mla-settings',
+            'mla_ai_section'
+        );
     }
 
     /**
@@ -244,13 +252,80 @@ class MLA_Settings
             }
         }
 
-        // Se ainda estiver vazio, cria um básico
+        // Reparo: Tentar consertar caracteres unicode corrompidos (ex: u00fa -> ú) vindos de saves anteriores problemáticos
+        $templates = $this->repair_unicode_recursive($templates);
+
+        // Se ainda estiver vazio, cria um básico fundamentado na metodologia
         if (empty($templates)) {
             $templates[] = array(
-                'id' => uniqid('tpl_'),
-                'name' => 'Novo Modelo',
+                'id' => 'tpl_default',
+                'name' => 'Metodologia Leitor-Apreciador (Padrão)',
                 'steps' => array(
-                    array('key' => 'step_1', 'title' => 'Introdução', 'description' => 'Descrição da etapa...')
+                    array(
+                        'key' => 'tema_central',
+                        'title' => 'Tema Central',
+                        'description' => 'Identifique e descreva de forma concisa a ideia principal que o texto busca transmitir.',
+                        'fields' => array(
+                            array(
+                                'name' => 'tema_central',
+                                'label' => __('Tema Central', 'metodologia-leitor-apreciador'),
+                                'placeholder' => __('Qual a ideia principal do texto?', 'metodologia-leitor-apreciador'),
+                            ),
+                        ),
+                    ),
+                    array(
+                        'key' => 'temas_subsidiarios',
+                        'title' => __('Temas Subsidiários', 'metodologia-leitor-apreciador'),
+                        'description' => __('Aponte outros assuntos ou ideias secundárias que apoiam e complementam o tema central.', 'metodologia-leitor-apreciador'),
+                        'fields' => array(
+                            array(
+                                'name' => 'temas_subsidiarios',
+                                'label' => __('Temas Subsidiários', 'metodologia-leitor-apreciador'),
+                                'placeholder' => __('Quais outros temas são abordados?', 'metodologia-leitor-apreciador'),
+                            ),
+                        ),
+                    ),
+                    array(
+                        'key' => 'correlacoes_doutrinarias',
+                        'title' => __('Correlações Doutrinárias', 'metodologia-leitor-apreciador'),
+                        'description' => __('Relacione este conteúdo com outros textos e doutrinas.', 'metodologia-leitor-apreciador'),
+                        'fields' => array(
+                            array(
+                                'name' => 'correlacoes_doutrinarias',
+                                'label' => __('Correlação', 'metodologia-leitor-apreciador'),
+                                'placeholder' => __('Que conexões você percebe com outros textos?', 'metodologia-leitor-apreciador'),
+                            ),
+                        ),
+                    ),
+                    array(
+                        'key' => 'aspectos_positivos',
+                        'title' => __('Aspectos Positivos', 'metodologia-leitor-apreciador'),
+                        'description' => __('Quais ensinamentos e pontos fortes você destaca neste texto? O que foi mais valioso para você?', 'metodologia-leitor-apreciador'),
+                        'fields' => array(
+                            array(
+                                'name' => 'aspectos_positivos',
+                                'label' => __('Aspectos Positivos', 'metodologia-leitor-apreciador'),
+                                'placeholder' => __('O que mais te impactou?', 'metodologia-leitor-apreciador'),
+                            ),
+                        ),
+                    ),
+                    array(
+                        'key' => 'duvidas',
+                        'title' => 'Dúvidas',
+                        'description' => 'Exponha os pontos que não ficaram totalmente claros ou que geraram algum tipo de estranhamento ou dúvida.',
+                        'fields' => array(
+                            array(
+                                'name' => 'duvidas',
+                                'label' => __('Dúvidas', 'metodologia-leitor-apreciador'),
+                                'placeholder' => __('Quais pontos não ficaram claros?', 'metodologia-leitor-apreciador'),
+                            ),
+                        ),
+                    ),
+                    array(
+                        'key' => 'perguntas_autores',
+                        'title' => 'Perguntas para os Autores',
+                        'description' => 'A partir de suas dúvidas, formule perguntas profundas baseadas fielmente no texto. ATENÇÃO: Perguntas fora de contexto ou alheias ao texto serão excluídas da análise.'
+                    ),
                 )
             );
         }
@@ -259,12 +334,32 @@ class MLA_Settings
         printf(
             '<textarea id="mla_step_templates_json" name="%s[step_templates]" style="display:none;">%s</textarea>',
             esc_attr(self::OPTION_KEY),
-            esc_textarea(json_encode($templates))
+            esc_textarea(json_encode($templates, JSON_UNESCAPED_UNICODE))
         );
 
         // Container para o React/JS App
         echo '<div id="mla-templates-editor"></div>';
         echo '<p class="description">' . __('Gerencie seus templates acima. Clique em "Salvar Alterações" no final da página para persistir.', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
+    /**
+     * Repara recursivamente strings que tiveram as contra-barras de escape unicode removidas.
+     */
+    private function repair_unicode_recursive($data)
+    {
+        if (is_string($data)) {
+            return preg_replace_callback('/u([0-9a-f]{4})/i', function ($matches) {
+                return json_decode('"\u' . $matches[1] . '"');
+            }, $data);
+        }
+
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = $this->repair_unicode_recursive($value);
+            }
+        }
+
+        return $data;
     }
 
     public function render_supabase_section()
@@ -313,21 +408,27 @@ class MLA_Settings
     {
         $settings = get_option(self::OPTION_KEY, array());
         $value = isset($settings['openrouter_model']) ? $settings['openrouter_model'] : 'openai/gpt-4o-mini';
-        $models = array(
-            'openai/gpt-4o' => 'GPT-4o (OpenAI)',
-            'openai/gpt-4o-mini' => 'GPT-4o Mini (OpenAI)',
-            'anthropic/claude-3.5-sonnet' => 'Claude 3.5 Sonnet (Anthropic)',
-            'anthropic/claude-3-haiku' => 'Claude 3 Haiku (Anthropic)',
-            'google/gemini-flash-1.5' => 'Gemini 1.5 Flash (Google)',
-            'google/gemini-pro-1.5' => 'Gemini 1.5 Pro (Google)',
-            'meta-llama/llama-3.1-70b-instruct' => 'Llama 3.1 70B (Meta)',
-        );
 
-        printf('<select name="%s[openrouter_model]">', esc_attr(self::OPTION_KEY));
+        $ai_service = new MLA_AI_Service();
+        $models = $ai_service->get_available_models();
+
+        if (is_wp_error($models)) {
+            printf('<p class="error">%s</p>', esc_html($models->get_error_message()));
+            // Fallback para modelos básicos se a API falhar
+            $models = array(
+                'openai/gpt-4o' => 'GPT-4o (OpenAI)',
+                'openai/gpt-4o-mini' => 'GPT-4o Mini (OpenAI)',
+                'anthropic/claude-3.5-sonnet' => 'Claude 3.5 Sonnet (Anthropic)',
+                'google/gemini-flash-1.5' => 'Gemini 1.5 Flash (Google)',
+            );
+        }
+
+        printf('<select name="%s[openrouter_model]" class="regular-text">', esc_attr(self::OPTION_KEY));
         foreach ($models as $id => $label) {
             printf('<option value="%s" %s>%s</option>', esc_attr($id), selected($value, $id, false), esc_html($label));
         }
         echo '</select>';
+        echo '<p class="description">' . __('Os modelos são carregados dinamicamente do OpenRouter. Use o botão de salvar para atualizar a lista se necessário.', 'metodologia-leitor-apreciador') . '</p>';
     }
 
     public function render_ai_system_prompt_field()
@@ -348,11 +449,27 @@ Formato de Saída (Markdown):
 (Lista de perguntas agrupadas e únicas com os nomes dos leitores)
 
 ## Síntese das Percepções
-(Texto consolidado identificando as contribuições dos leitores)";
+(Texto consolidado identificando as contribuindo das contribuições dos leitores)";
 
         $value = isset($settings['ai_system_prompt']) ? $settings['ai_system_prompt'] : $default_prompt;
         printf('<textarea name="%s[ai_system_prompt]" rows="15" class="large-text code">%s</textarea>', esc_attr(self::OPTION_KEY), esc_textarea($value));
         echo '<p class="description">' . __('Este prompt define como a IA deve processar as respostas. Use como base para customizar o resultado.', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
+    public function render_methodology_explanation_field()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+        $value = isset($settings['methodology_explanation']) ? $settings['methodology_explanation'] : '';
+
+        wp_editor($value, 'mla_methodology_explanation', array(
+            'textarea_name' => self::OPTION_KEY . '[methodology_explanation]',
+            'textarea_rows' => 10,
+            'media_buttons' => false,
+            'tinymce' => true,
+            'quicktags' => true
+        ));
+
+        echo '<p class="description">' . __('Descreva a metodologia Leitor-Apreciador. Este texto será enviado à IA como contexto para ajudar na análise.', 'metodologia-leitor-apreciador') . '</p>';
     }
 
     public function render_autosave_field()
@@ -401,6 +518,7 @@ Formato de Saída (Markdown):
     public function sanitize_settings($input)
     {
         $sanitized = array();
+        $settings = get_option(self::OPTION_KEY, array());
 
         if (isset($input['autosave_interval']))
             $sanitized['autosave_interval'] = max(10, min(120, intval($input['autosave_interval'])));
@@ -452,12 +570,27 @@ Formato de Saída (Markdown):
             $sanitized['supabase_service_key'] = sanitize_text_field($input['supabase_service_key']);
 
         // IA
-        if (isset($input['openrouter_api_key']))
+        if (isset($input['openrouter_api_key'])) {
+            $old_key = isset($settings['openrouter_api_key']) ? $settings['openrouter_api_key'] : '';
             $sanitized['openrouter_api_key'] = sanitize_text_field($input['openrouter_api_key']);
-        if (isset($input['openrouter_model']))
+
+            // Se a chave mudou, limpa o cache de modelos
+            if ($sanitized['openrouter_api_key'] !== $old_key) {
+                delete_transient('mla_openrouter_models_cache');
+            }
+        }
+
+        if (isset($input['openrouter_model'])) {
             $sanitized['openrouter_model'] = sanitize_text_field($input['openrouter_model']);
-        if (isset($input['ai_system_prompt']))
+        }
+
+        if (isset($input['ai_system_prompt'])) {
             $sanitized['ai_system_prompt'] = sanitize_textarea_field($input['ai_system_prompt']);
+        }
+
+        if (isset($input['methodology_explanation'])) {
+            $sanitized['methodology_explanation'] = wp_kses_post($input['methodology_explanation']);
+        }
 
         return $sanitized;
     }

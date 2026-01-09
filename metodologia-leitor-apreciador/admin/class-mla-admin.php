@@ -67,11 +67,13 @@ class MLA_Admin
 
         wp_localize_script('mla-admin', 'mlaAdmin', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
+            'adminUrl' => admin_url(),
             'nonce' => wp_create_nonce('mla_admin_nonce'),
             'i18n' => array(
                 'confirmDelete' => __('Tem certeza que deseja excluir este item?', 'metodologia-leitor-apreciador'),
                 'processingAI' => __('Processando análise... isso pode levar cerca de um minuto.', 'metodologia-leitor-apreciador'),
                 'errorAI' => __('Ocorreu um erro ao processar a análise por IA.', 'metodologia-leitor-apreciador'),
+                'dontCloseTip' => __('Por favor, não feche esta janela ou mude de página até que o processo seja concluído.', 'metodologia-leitor-apreciador'),
                 'saving' => __('Salvando...', 'metodologia-leitor-apreciador'),
                 'saved' => __('Salvo!', 'metodologia-leitor-apreciador'),
                 'error' => __('Erro ao salvar.', 'metodologia-leitor-apreciador'),
@@ -94,6 +96,7 @@ class MLA_Admin
             'leitor-apreciador_page_mla-texts',
             'leitor-apreciador_page_mla-responses',
             'leitor-apreciador_page_mla-settings',
+            'leitor-apreciador_page_mla-debug',
         );
 
         // Também verificar páginas de edição de posts

@@ -24,6 +24,11 @@ class MLA_AI_Service
     const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
     /**
+     * URL para listagem de modelos.
+     */
+    const API_MODELS_URL = 'https://openrouter.ai/api/v1/models';
+
+    /**
      * Obtém a chave da API das configurações.
      */
     private function get_api_key()
@@ -74,7 +79,7 @@ Formato de Saída (Markdown):
      *
      * @return string|WP_Error Resultado da análise ou erro.
      */
-    public function analyze_responses($responses_json)
+    public function analyze_responses($responses_json, $context = array())
     {
         $api_key = $this->get_api_key();
         if (empty($api_key)) {
@@ -83,6 +88,19 @@ Formato de Saída (Markdown):
 
         $model = $this->get_model();
         $system_prompt = $this->get_system_prompt();
+
+        $user_content = "Aqui estão as respostas dos leitores para análise:\n\n" . json_encode($responses_json, JSON_UNESCAPED_UNICODE);
+
+        if (!empty($context)) {
+            $context_str = "\n\n--- CONTEXTO ADICIONAL ---\n";
+            if (!empty($context['methodology'])) {
+                $context_str .= "\nMETODOLOGIA:\n" . wp_strip_all_tags($context['methodology']) . "\n";
+            }
+            if (!empty($context['original_text'])) {
+                $context_str .= "\nTEXTO ORIGINAL ANALISADO PELOS LEITORES:\n" . wp_strip_all_tags($context['original_text']) . "\n";
+            }
+            $user_content = $context_str . "\n" . $user_content;
+        }
 
         $body = array(
             'model' => $model,
@@ -93,7 +111,7 @@ Formato de Saída (Markdown):
                 ),
                 array(
                     'role' => 'user',
-                    'content' => "Aqui estão as respostas dos leitores para análise:\n\n" . json_encode($responses_json, JSON_UNESCAPED_UNICODE)
+                    'content' => $user_content
                 )
             )
         );
@@ -122,5 +140,52 @@ Formato de Saída (Markdown):
         }
 
         return isset($result['choices'][0]['message']['content']) ? $result['choices'][0]['message']['content'] : '';
+    }
+
+    /**
+     * Obtém a lista de modelos disponíveis no OpenRouter.
+     *
+     * @return array|WP_Error Lista de modelos [id => name] ou erro.
+     */
+    public function get_available_models()
+    {
+        $cache_key = 'mla_openrouter_models_cache';
+        $cached = get_transient($cache_key);
+
+        if (false !== $cached) {
+            return $cached;
+        }
+
+        $response = wp_remote_get(self::API_MODELS_URL, array(
+            'timeout' => 15,
+            'headers' => array(
+                'HTTP-Referer' => get_site_url(),
+                'X-Title' => 'Metodologia Leitor-Apreciador WP Plugin'
+            )
+        ));
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        if (200 !== $status_code || !isset($data['data'])) {
+            return new WP_Error('mla_ai_models_error', __('Erro ao buscar modelos do OpenRouter.', 'metodologia-leitor-apreciador'));
+        }
+
+        $models = array();
+        foreach ($data['data'] as $model) {
+            $models[$model['id']] = isset($model['name']) ? $model['name'] : $model['id'];
+        }
+
+        // Ordenar por nome
+        asort($models);
+
+        set_transient($cache_key, $models, DAY_IN_SECONDS);
+
+        return $models;
     }
 }

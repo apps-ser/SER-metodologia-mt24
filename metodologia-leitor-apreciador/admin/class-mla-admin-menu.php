@@ -124,6 +124,26 @@ class MLA_Admin_Menu
             'mla-settings',
             array($this->settings, 'render_page')
         );
+
+        // Submenu: Debug (apenas para administradores)
+        add_submenu_page(
+            'mla-main',
+            __('Debug', 'metodologia-leitor-apreciador'),
+            __('Debug', 'metodologia-leitor-apreciador'),
+            'manage_options',
+            'mla-debug',
+            array($this, 'render_debug_page')
+        );
+    }
+
+    /**
+     * Renderiza a página de debug.
+     *
+     * @return void
+     */
+    public function render_debug_page()
+    {
+        include MLA_PLUGIN_DIR . 'admin/partials/debug-info.php';
     }
 
     /**
