@@ -1,0 +1,126 @@
+<?php
+/**
+ * Serviço de integração com a API do OpenRouter para análise por IA.
+ *
+ * @package MetodologiaLeitorApreciador
+ */
+
+// Se este arquivo for chamado diretamente, abortar.
+if (!defined('WPINC')) {
+    die;
+}
+
+/**
+ * Class MLA_AI_Service
+ *
+ * Lida com chamadas à API do OpenRouter e processamento de prompts.
+ */
+class MLA_AI_Service
+{
+
+    /**
+     * URL da API do OpenRouter.
+     */
+    const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+    /**
+     * Obtém a chave da API das configurações.
+     */
+    private function get_api_key()
+    {
+        $settings = get_option('mla_settings', array());
+        return isset($settings['openrouter_api_key']) ? $settings['openrouter_api_key'] : '';
+    }
+
+    /**
+     * Obtém o modelo configurado.
+     */
+    private function get_model()
+    {
+        $settings = get_option('mla_settings', array());
+        return isset($settings['openrouter_model']) ? $settings['openrouter_model'] : 'openai/gpt-4o-mini';
+    }
+
+    /**
+     * Obtém o prompt do sistema configurado.
+     */
+    private function get_system_prompt()
+    {
+        $settings = get_option('mla_settings', array());
+        $default_prompt = "Você é um analista especializado na metodologia Leitor-Apreciador. 
+Sua tarefa é analisar um JSON contendo respostas de vários leitores sobre um texto específico.
+
+Objetivos:
+1. Agrupar Perguntas: Identifique perguntas que expressam a mesma dúvida ou ideia. Crie uma pergunta única, clara e profunda para cada grupo, fundindo as nuances. Cite o nome de todos os leitores que contribuíram para aquele grupo de ideias.
+2. Perguntas Únicas: Mantenha perguntas que não possuem similares.
+3. Síntese do Conteúdo: Gere um texto que sintetize e resuma as impressões, sentimentos e observações dos leitores sobre o texto original. Preserve informações valiosas e observações específicas de cada leitor, citando-os quando as ideias forem mencionadas.
+
+Formato de Saída (Markdown):
+# Análise das Respostas (IA)
+
+## Perguntas para os Autores
+(Lista de perguntas agrupadas e únicas com os nomes dos leitores)
+
+## Síntese das Percepções
+(Texto consolidado identificando as contribuições dos leitores)";
+
+        return isset($settings['ai_system_prompt']) ? $settings['ai_system_prompt'] : $default_prompt;
+    }
+
+    /**
+     * Realiza a análise das respostas via IA.
+     *
+     * @param array $responses_json Array de respostas em formato JSON.
+     *
+     * @return string|WP_Error Resultado da análise ou erro.
+     */
+    public function analyze_responses($responses_json)
+    {
+        $api_key = $this->get_api_key();
+        if (empty($api_key)) {
+            return new WP_Error('mla_ai_missing_key', __('Chave da API do OpenRouter não configurada.', 'metodologia-leitor-apreciador'));
+        }
+
+        $model = $this->get_model();
+        $system_prompt = $this->get_system_prompt();
+
+        $body = array(
+            'model' => $model,
+            'messages' => array(
+                array(
+                    'role' => 'system',
+                    'content' => $system_prompt
+                ),
+                array(
+                    'role' => 'user',
+                    'content' => "Aqui estão as respostas dos leitores para análise:\n\n" . json_encode($responses_json, JSON_UNESCAPED_UNICODE)
+                )
+            )
+        );
+
+        $response = wp_remote_post(self::API_URL, array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $api_key,
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => get_site_url(),
+                'X-Title' => 'Metodologia Leitor-Apreciador WP Plugin'
+            ),
+            'body' => json_encode($body),
+            'timeout' => 60
+        ));
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        $result = json_decode(wp_remote_retrieve_body($response), true);
+
+        if (200 !== $status_code) {
+            $error_msg = isset($result['error']['message']) ? $result['error']['message'] : __('Erro desconhecido na API do OpenRouter.', 'metodologia-leitor-apreciador');
+            return new WP_Error('mla_ai_api_error', $error_msg);
+        }
+
+        return isset($result['choices'][0]['message']['content']) ? $result['choices'][0]['message']['content'] : '';
+    }
+}

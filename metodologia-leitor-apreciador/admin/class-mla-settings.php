@@ -154,6 +154,38 @@ class MLA_Settings
             'mla-settings',
             'mla_supabase_section'
         );
+
+        // Seção: Inteligência Artificial (OpenRouter)
+        add_settings_section(
+            'mla_ai_section',
+            __('Inteligência Artificial (OpenRouter.ai)', 'metodologia-leitor-apreciador'),
+            array($this, 'render_ai_section'),
+            'mla-settings'
+        );
+
+        add_settings_field(
+            'openrouter_api_key',
+            __('Chave da API OpenRouter', 'metodologia-leitor-apreciador'),
+            array($this, 'render_openrouter_api_key_field'),
+            'mla-settings',
+            'mla_ai_section'
+        );
+
+        add_settings_field(
+            'openrouter_model',
+            __('Modelo de IA', 'metodologia-leitor-apreciador'),
+            array($this, 'render_openrouter_model_field'),
+            'mla-settings',
+            'mla_ai_section'
+        );
+
+        add_settings_field(
+            'ai_system_prompt',
+            __('Prompt de Processamento (Sistema)', 'metodologia-leitor-apreciador'),
+            array($this, 'render_ai_system_prompt_field'),
+            'mla-settings',
+            'mla_ai_section'
+        );
     }
 
     /**
@@ -264,6 +296,65 @@ class MLA_Settings
         printf('<input type="password" name="%s[supabase_service_key]" value="%s" class="regular-text code">', esc_attr(self::OPTION_KEY), esc_attr($value));
     }
 
+    public function render_ai_section()
+    {
+        echo '<p>' . esc_html__('Configure a integração com o OpenRouter para realizar análises automáticas das respostas.', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
+    public function render_openrouter_api_key_field()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+        $value = isset($settings['openrouter_api_key']) ? $settings['openrouter_api_key'] : '';
+        printf('<input type="password" name="%s[openrouter_api_key]" value="%s" class="regular-text code">', esc_attr(self::OPTION_KEY), esc_attr($value));
+        echo '<p class="description">' . __('Obtenha sua chave em <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai</a>.', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
+    public function render_openrouter_model_field()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+        $value = isset($settings['openrouter_model']) ? $settings['openrouter_model'] : 'openai/gpt-4o-mini';
+        $models = array(
+            'openai/gpt-4o' => 'GPT-4o (OpenAI)',
+            'openai/gpt-4o-mini' => 'GPT-4o Mini (OpenAI)',
+            'anthropic/claude-3.5-sonnet' => 'Claude 3.5 Sonnet (Anthropic)',
+            'anthropic/claude-3-haiku' => 'Claude 3 Haiku (Anthropic)',
+            'google/gemini-flash-1.5' => 'Gemini 1.5 Flash (Google)',
+            'google/gemini-pro-1.5' => 'Gemini 1.5 Pro (Google)',
+            'meta-llama/llama-3.1-70b-instruct' => 'Llama 3.1 70B (Meta)',
+        );
+
+        printf('<select name="%s[openrouter_model]">', esc_attr(self::OPTION_KEY));
+        foreach ($models as $id => $label) {
+            printf('<option value="%s" %s>%s</option>', esc_attr($id), selected($value, $id, false), esc_html($label));
+        }
+        echo '</select>';
+    }
+
+    public function render_ai_system_prompt_field()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+        $default_prompt = "Você é um analista especializado na metodologia Leitor-Apreciador. 
+Sua tarefa é analisar um JSON contendo respostas de vários leitores sobre um texto específico.
+
+Objetivos:
+1. Agrupar Perguntas: Identifique perguntas que expressam a mesma dúvida ou ideia. Crie uma pergunta única, clara e profunda para cada grupo, fundindo as nuances. Cite o nome de todos os leitores que contribuíram para aquele grupo de ideias.
+2. Perguntas Únicas: Mantenha perguntas que não possuem similares.
+3. Síntese do Conteúdo: Gere um texto que sintetize e resuma as impressões, sentimentos e observações dos leitores sobre o texto original. Preserve informações valiosas e observações específicas de cada leitor, citando-os quando as ideias forem mencionadas.
+
+Formato de Saída (Markdown):
+# Análise das Respostas (IA)
+
+## Perguntas para os Autores
+(Lista de perguntas agrupadas e únicas com os nomes dos leitores)
+
+## Síntese das Percepções
+(Texto consolidado identificando as contribuições dos leitores)";
+
+        $value = isset($settings['ai_system_prompt']) ? $settings['ai_system_prompt'] : $default_prompt;
+        printf('<textarea name="%s[ai_system_prompt]" rows="15" class="large-text code">%s</textarea>', esc_attr(self::OPTION_KEY), esc_textarea($value));
+        echo '<p class="description">' . __('Este prompt define como a IA deve processar as respostas. Use como base para customizar o resultado.', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
     public function render_autosave_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
@@ -359,6 +450,14 @@ class MLA_Settings
             $sanitized['supabase_anon_key'] = sanitize_text_field($input['supabase_anon_key']);
         if (isset($input['supabase_service_key']))
             $sanitized['supabase_service_key'] = sanitize_text_field($input['supabase_service_key']);
+
+        // IA
+        if (isset($input['openrouter_api_key']))
+            $sanitized['openrouter_api_key'] = sanitize_text_field($input['openrouter_api_key']);
+        if (isset($input['openrouter_model']))
+            $sanitized['openrouter_model'] = sanitize_text_field($input['openrouter_model']);
+        if (isset($input['ai_system_prompt']))
+            $sanitized['ai_system_prompt'] = sanitize_textarea_field($input['ai_system_prompt']);
 
         return $sanitized;
     }

@@ -53,12 +53,16 @@ class MLA_Texts
             wp_die(esc_html__('Você não tem permissão para acessar esta página.', 'metodologia-leitor-apreciador'));
         }
 
+        // Obter configurações
+        $settings = get_option('mla_settings', array());
+        $allowed_types = isset($settings['allowed_post_types']) ? $settings['allowed_post_types'] : array('post', 'page');
+
         // Filtros
         $filter_project = isset($_GET['project_id']) ? sanitize_text_field(wp_unslash($_GET['project_id'])) : '';
 
         // Obter posts com metodologia ativa
         $args = array(
-            'post_type' => array('post', 'page'),
+            'post_type' => $allowed_types,
             'posts_per_page' => 50,
             'meta_query' => array(
                 array(

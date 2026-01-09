@@ -39,6 +39,9 @@ class MLA_Responses
     {
         $this->service = new MLA_Responses_Service();
         $this->projects_service = new MLA_Projects_Service();
+
+        // AJAX para Análise de IA
+        add_action('wp_ajax_mla_analyze_responses', array($this, 'ajax_analyze_responses'));
     }
 
     /**
@@ -138,6 +141,67 @@ class MLA_Responses
         }
 
         include MLA_PLUGIN_DIR . 'admin/partials/responses-detail.php';
+    }
+
+    /**
+     * Handler AJAX para realizar a análise por IA.
+     */
+    public function ajax_analyze_responses()
+    {
+        check_ajax_referer('mla_admin_nonce', 'nonce');
+
+        $text_id = isset($_POST['text_id']) ? sanitize_text_field(wp_unslash($_POST['text_id'])) : '';
+
+        if (empty($text_id)) {
+            wp_send_json_error(array('message' => __('ID do texto não informado.', 'metodologia-leitor-apreciador')));
+        }
+
+        // 1. Buscar todas as respostas submetidas para este texto
+        $responses = $this->service->get_all(array(
+            'text_id' => $text_id,
+            'status' => 'submitted',
+            'limit' => 200 // Limite razoável para análise
+        ));
+
+        if (empty($responses)) {
+            wp_send_json_error(array('message' => __('Nenhuma resposta submetida encontrada para este texto.', 'metodologia-leitor-apreciador')));
+        }
+
+        // 2. Formatar dados para a IA (Incluindo nomes de usuários)
+        $analysis_data = array();
+        foreach ($responses as $resp) {
+            $user = get_user_by('id', $resp['wp_user_id']);
+            $reader_name = $user ? $user->display_name : __('Anônimo', 'metodologia-leitor-apreciador');
+
+            $analysis_data[] = array(
+                'leitor' => $reader_name,
+                'respostas' => $resp['content']
+            );
+        }
+
+        // 3. Chamar o serviço de IA
+        $ai_service = new MLA_AI_Service();
+        $result = $ai_service->analyze_responses($analysis_data);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        // 4. Persistir no Supabase
+        $analysis_persist_service = new MLA_AI_Analysis_Service();
+        $settings = get_option('mla_settings', array());
+        $model = isset($settings['openrouter_model']) ? $settings['openrouter_model'] : 'openai/gpt-4o-mini';
+
+        $persist_result = $analysis_persist_service->save($text_id, $result, $model);
+
+        if (is_wp_error($persist_result)) {
+            // Log do erro de persistência, mas retorna o resultado da IA para o usuário
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MLA AI Persistence Error: ' . $persist_result->get_error_message());
+            }
+        }
+
+        wp_send_json_success(array('content' => $result));
     }
 
     /**

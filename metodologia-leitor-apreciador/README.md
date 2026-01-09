@@ -37,60 +37,67 @@ define( 'MLA_SUPABASE_SERVICE_KEY', 'sua-chave-service-role' ); // Para operaç�
 
 ### 2. Criar tabelas no Supabase
 
-Execute o seguinte SQL no SQL Editor do Supabase:
+Execute o seguinte SQL no SQL Editor do Supabase para configurar toda a estrutura necessária:
 
 ```sql
--- Tabela de Projetos
-CREATE TABLE projects (
+-- 1. Tabela de Projetos
+CREATE TABLE IF NOT EXISTS public.projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
-    status TEXT DEFAULT 'active',
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'archived')),
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Tabela de Textos (posts WP com metodologia ativa)
-CREATE TABLE texts (
+-- 2. Tabela de Textos (Sincronização com Posts WP)
+CREATE TABLE IF NOT EXISTS public.texts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    wp_post_id BIGINT NOT NULL,
-    project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
-    title TEXT,
+    wp_post_id BIGINT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Índice para busca por post_id
-CREATE INDEX idx_texts_wp_post_id ON texts(wp_post_id);
-
--- Tabela de Respostas
-CREATE TABLE responses (
+-- 3. Tabela de Respostas
+CREATE TABLE IF NOT EXISTS public.responses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    text_id UUID REFERENCES texts(id) ON DELETE CASCADE,
+    text_id UUID NOT NULL REFERENCES public.texts(id) ON DELETE CASCADE,
     wp_user_id BIGINT NOT NULL,
     wp_user_email TEXT,
-    project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
-    status TEXT DEFAULT 'draft',
+    project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
+    data JSONB NOT NULL DEFAULT '{}'::jsonb,
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'submitted')),
     version INTEGER DEFAULT 1,
-    data JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(wp_user_id, text_id)
 );
 
--- Índices para busca
-CREATE INDEX idx_responses_text_id ON responses(text_id);
-CREATE INDEX idx_responses_wp_user_id ON responses(wp_user_id);
-CREATE INDEX idx_responses_status ON responses(status);
-
--- Tabela de Histórico de Versões
-CREATE TABLE response_history (
+-- 4. Tabela de Histórico de Versões
+CREATE TABLE IF NOT EXISTS public.response_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    response_id UUID REFERENCES responses(id) ON DELETE CASCADE,
+    response_id UUID NOT NULL REFERENCES public.responses(id) ON DELETE CASCADE,
     version INTEGER NOT NULL,
     data JSONB NOT NULL,
     submitted_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_response_history_response_id ON response_history(response_id);
+-- 5. Tabela de Análises de IA (OpenRouter)
+CREATE TABLE IF NOT EXISTS public.ai_analyses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    text_id UUID NOT NULL REFERENCES public.texts(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    model TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Índices para Performance
+CREATE INDEX IF NOT EXISTS idx_texts_wp_post_id ON public.texts(wp_post_id);
+CREATE INDEX IF NOT EXISTS idx_responses_text_id ON public.responses(text_id);
+CREATE INDEX IF NOT EXISTS idx_responses_wp_user_id ON public.responses(wp_user_id);
+CREATE INDEX IF NOT EXISTS idx_response_history_response_id ON public.response_history(response_id);
+CREATE INDEX IF NOT EXISTS idx_ai_analyses_text_id ON public.ai_analyses(text_id);
 ```
 
 ### 3. Configurar Row Level Security (RLS) - Opcional

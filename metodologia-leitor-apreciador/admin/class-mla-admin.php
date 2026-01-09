@@ -39,6 +39,8 @@ class MLA_Admin
             MLA_VERSION,
             'all'
         );
+
+        wp_enqueue_style('wp-jquery-ui-dialog');
     }
 
     /**
@@ -58,7 +60,7 @@ class MLA_Admin
         wp_enqueue_script(
             'mla-admin',
             MLA_PLUGIN_URL . 'assets/js/mla-admin.js',
-            array('jquery'),
+            array('jquery', 'jquery-ui-dialog'),
             MLA_VERSION,
             true
         );
@@ -68,6 +70,8 @@ class MLA_Admin
             'nonce' => wp_create_nonce('mla_admin_nonce'),
             'i18n' => array(
                 'confirmDelete' => __('Tem certeza que deseja excluir este item?', 'metodologia-leitor-apreciador'),
+                'processingAI' => __('Processando análise... isso pode levar cerca de um minuto.', 'metodologia-leitor-apreciador'),
+                'errorAI' => __('Ocorreu um erro ao processar a análise por IA.', 'metodologia-leitor-apreciador'),
                 'saving' => __('Salvando...', 'metodologia-leitor-apreciador'),
                 'saved' => __('Salvo!', 'metodologia-leitor-apreciador'),
                 'error' => __('Erro ao salvar.', 'metodologia-leitor-apreciador'),

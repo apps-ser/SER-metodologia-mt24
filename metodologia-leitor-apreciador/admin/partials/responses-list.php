@@ -46,6 +46,14 @@ if (!defined('WPINC')) {
                 </button>
             </div>
             <div class="alignright">
+                <?php if (!empty($filters['text_id'])): ?>
+                    <button type="button" id="mla-analyze-ia" class="button button-primary"
+                        data-text-id="<?php echo esc_attr($filters['text_id']); ?>">
+                        <span class="dashicons dashicons-admin-appearance" style="margin-top:4px;"></span>
+                        <?php esc_html_e('Analisar com IA', 'metodologia-leitor-apreciador'); ?>
+                    </button>
+                    |
+                <?php endif; ?>
                 <a href="<?php echo esc_url(MLA_Export::get_export_url('csv', $filters)); ?>" class="button">
                     <?php esc_html_e('Exportar CSV', 'metodologia-leitor-apreciador'); ?>
                 </a>
@@ -55,6 +63,18 @@ if (!defined('WPINC')) {
             </div>
         </form>
         <br class="clear">
+    </div>
+
+    <!-- Modal para Resultado da IA -->
+    <div id="mla-ai-modal" style="display:none;"
+        title="<?php esc_attr_e('Análise por IA', 'metodologia-leitor-apreciador'); ?>">
+        <div id="mla-ai-result-content">
+            <p><em><?php esc_html_e('Processando análise... isso pode levar cerca de um minuto.', 'metodologia-leitor-apreciador'); ?></em>
+            </p>
+            <div class="mla-progress-bar">
+                <div class="mla-progress-value"></div>
+            </div>
+        </div>
     </div>
 
     <?php if (is_wp_error($responses)): ?>
@@ -131,5 +151,39 @@ if (!defined('WPINC')) {
     .mla-draft {
         background: #fff3cd;
         color: #856404
+    }
+
+    /* Estilos do Modal e Progress Bar */
+    #mla-ai-result-content {
+        padding: 15px;
+        line-height: 1.6;
+    }
+
+    #mla-ai-result-content h1,
+    #mla-ai-result-content h2 {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+    }
+
+    .mla-progress-bar {
+        height: 10px;
+        background: #eee;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 20px;
+    }
+
+    .mla-progress-value {
+        height: 100%;
+        background: #2271b1;
+        width: 0%;
+        transition: width 30s linear;
+    }
+
+    #mla-ai-result-content pre {
+        white-space: pre-wrap;
+        background: #f6f7f7;
+        padding: 10px;
+        border: 1px solid #dcdcde;
     }
 </style>

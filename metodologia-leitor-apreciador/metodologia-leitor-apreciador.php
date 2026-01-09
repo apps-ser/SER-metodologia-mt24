@@ -136,6 +136,8 @@ function mla_load_classes()
     require_once MLA_PLUGIN_DIR . 'services/class-mla-projects-service.php';
     require_once MLA_PLUGIN_DIR . 'services/class-mla-texts-service.php';
     require_once MLA_PLUGIN_DIR . 'services/class-mla-responses-service.php';
+    require_once MLA_PLUGIN_DIR . 'services/class-mla-ai-service.php';
+    require_once MLA_PLUGIN_DIR . 'services/class-mla-ai-analysis-service.php';
 
     // Admin
     require_once MLA_PLUGIN_DIR . 'admin/class-mla-admin.php';
