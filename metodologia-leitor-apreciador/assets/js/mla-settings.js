@@ -60,49 +60,60 @@ jQuery(document).ready(function ($) {
             (tpl.steps || []).forEach((step, stepIndex) => {
                 const $stepItem = $('<div class="mla-step-item"></div>');
 
-                // Header da Etapa (Drag Handle + Title Perview)
-                $stepItem.append('<span class="dashicons dashicons-move drag-handle"></span>');
+                // Header da Etapa (Drag Handle + Title Index + Remove)
+                const $stepHeader = $('<div class="mla-step-header"></div>');
+                $stepHeader.append('<span class="dashicons dashicons-move drag-handle" title="Arrastar para reordenar"></span>');
+                $stepHeader.append($('<span class="step-label"></span>').text('Etapa #' + (stepIndex + 1)));
 
-                const $inputs = $('<div class="step-inputs"></div>');
-
-                // Linha 1: Chave e Título
-                const $row1 = $('<div class="step-input-row"></div>');
-
-                // Chave
-                $row1.append('<div><label>' + mlaSettingsData.i18n.stepKey + '</label><input type="text" class="small-text code step-key" value="' + (step.key || '') + '"></div>');
-
-                // Título
-                $row1.append('<div><label>' + mlaSettingsData.i18n.stepTitle + '</label><input type="text" class="regular-text step-title" value="' + (step.title || '') + '"></div>');
-
-                $inputs.append($row1);
-
-                // Linha 2: Descrição
-                const $row2 = $('<div class="step-input-row"></div>');
-                $row2.append('<div><label>' + mlaSettingsData.i18n.stepDesc + '</label><textarea class="large-text step-desc" rows="2">' + (step.description || '') + '</textarea></div>');
-                $inputs.append($row2);
-
-                $stepItem.append($inputs);
-
-                // Botão Remover Etapa
-                const $btnRemoveStep = $('<button type="button" class="button button-small button-link-delete"><span class="dashicons dashicons-trash"></span></button>');
+                // Botão Remover Etapa (agora no header)
+                const $btnRemoveStep = $('<button type="button" class="button button-small button-link-delete" title="Excluir Etapa"><span class="dashicons dashicons-trash"></span></button>');
                 $btnRemoveStep.on('click', () => {
                     if (confirm(mlaSettingsData.i18n.confirmRemove)) {
                         tpl.steps.splice(stepIndex, 1);
                         update();
                     }
                 });
-                $stepItem.append($btnRemoveStep);
+                $stepHeader.append($btnRemoveStep);
+                $stepItem.append($stepHeader);
 
-                // Bind events inputs
-                $stepItem.find('.step-key').on('change', (e) => {
+                // Body da Etapa (Campos em Grid)
+                const $stepBody = $('<div class="mla-step-body"></div>');
+                const $grid = $('<div class="step-field-grid"></div>');
+
+                // Chave
+                const $fieldKey = $('<div class="step-field"></div>');
+                $fieldKey.append('<label>' + mlaSettingsData.i18n.stepKey + '</label>');
+                const $inputKey = $('<input type="text" class="small-text code step-key" value="' + (step.key || '') + '">');
+                $fieldKey.append($inputKey);
+                $grid.append($fieldKey);
+
+                // Título
+                const $fieldTitle = $('<div class="step-field"></div>');
+                $fieldTitle.append('<label>' + mlaSettingsData.i18n.stepTitle + '</label>');
+                const $inputTitle = $('<input type="text" class="step-title" value="' + (step.title || '') + '">');
+                $fieldTitle.append($inputTitle);
+                $grid.append($fieldTitle);
+
+                // Descrição (Full Width)
+                const $fieldDesc = $('<div class="step-field step-field-full"></div>');
+                $fieldDesc.append('<label>' + mlaSettingsData.i18n.stepDesc + '</label>');
+                const $inputDesc = $('<textarea class="large-text step-desc" rows="2">' + (step.description || '') + '</textarea>');
+                $fieldDesc.append($inputDesc);
+                $grid.append($fieldDesc);
+
+                $stepBody.append($grid);
+                $stepItem.append($stepBody);
+
+                // Eventos
+                $inputKey.on('change', (e) => {
                     step.key = $(e.target).val();
                     serialize();
                 });
-                $stepItem.find('.step-title').on('input', (e) => {
+                $inputTitle.on('input', (e) => {
                     step.title = $(e.target).val();
                     serialize();
                 });
-                $stepItem.find('.step-desc').on('input', (e) => {
+                $inputDesc.on('input', (e) => {
                     step.description = $(e.target).val();
                     serialize();
                 });
@@ -130,19 +141,21 @@ jQuery(document).ready(function ($) {
 
             $content.append($stepsList);
 
-            // Botão Adicionar Etapa
-            const $btnAddStep = $('<button type="button" class="button">' + mlaSettingsData.i18n.addStep + '</button>');
+            // Ações do Template (Adicionar Etapa)
+            const $tplActions = $('<div class="mla-template-actions"></div>');
+            const $btnAddStep = $('<button type="button" class="button button-secondary">' + mlaSettingsData.i18n.addStep + '</button>');
             $btnAddStep.on('click', () => {
                 const newIdx = (tpl.steps || []).length + 1;
                 if (!tpl.steps) tpl.steps = [];
                 tpl.steps.push({
-                    key: 'step_' + newIdx,
+                    key: 'etapa_' + newIdx,
                     title: 'Nova Etapa ' + newIdx,
                     description: ''
                 });
                 update();
             });
-            $content.append($btnAddStep);
+            $tplActions.append($btnAddStep);
+            $content.append($tplActions);
 
             $tplItem.append($content);
             $editor.append($tplItem);

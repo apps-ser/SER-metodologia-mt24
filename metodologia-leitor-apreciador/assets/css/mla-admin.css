@@ -177,93 +177,194 @@
 /* Template Editor */
 #mla-templates-editor {
     margin-top: 20px;
+    max-width: 1000px;
 }
 
 .mla-template-item {
-    margin-bottom: 30px;
+    margin-bottom: 40px;
     border: 1px solid #c3c4c7;
     background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .mla-template-item .postbox-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 15px;
-    background: #f6f7f7;
+    padding: 12px 20px;
+    background: #f0f0f1;
     border-bottom: 1px solid #c3c4c7;
 }
 
+.mla-template-item .postbox-header h2 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+}
+
 .mla-template-item .handle-actions {
-    padding: 10px 0;
+    display: flex;
+    gap: 10px;
+}
+
+.mla-template-item .inside {
+    padding: 25px;
 }
 
 .mla-form-row {
-    margin-bottom: 15px;
+    margin-bottom: 25px;
 }
 
 .mla-form-row label {
     display: block;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    color: #1d2327;
+}
+
+.mla-form-row input.regular-text {
+    width: 100%;
+    max-width: 500px;
+    padding: 8px 12px;
 }
 
 .mla-steps-list {
-    margin: 15px 0;
+    margin: 20px 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
 }
 
+/* Step Card Item */
 .mla-step-item {
+    background: #fff !important;
+    border: 1px solid #dcdcde !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+    margin-bottom: 0 !important;
+    display: block !important;
+    /* Ensure it's block for the header/body stack */
+}
+
+.mla-step-item:hover {
+    border-color: #2271b1;
+    box-shadow: 0 2px 8px rgba(34, 113, 177, 0.1);
+}
+
+.mla-step-item:focus-within {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+/* Step Header */
+.mla-step-header {
     display: flex;
-    align-items: flex-start;
-    padding: 15px;
-    background: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-bottom: 10px;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dcdcde;
+    border-radius: 6px 6px 0 0;
 }
 
-.mla-step-item .drag-handle {
+.mla-step-header .drag-handle {
     cursor: move;
-    margin-right: 10px;
-    color: #999;
-    padding-top: 5px;
+    color: #a7aaad;
+    margin-right: 15px;
+    transition: color 0.1s ease;
 }
 
-.mla-step-item .step-inputs {
+.mla-step-header .drag-handle:hover {
+    color: #2271b1;
+}
+
+.mla-step-header .step-label {
+    font-weight: 600;
+    color: #50575e;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     flex-grow: 1;
 }
 
-.step-input-row {
+/* Step Body & Grid */
+.mla-step-body {
+    padding: 20px;
+}
+
+.step-field-grid {
+    display: grid !important;
+    grid-template-columns: 180px 1fr !important;
+    gap: 20px !important;
+    margin-bottom: 20px !important;
+}
+
+.step-field {
     display: flex;
-    gap: 15px;
-    margin-bottom: 10px;
+    flex-direction: column;
 }
 
-.step-input-row>div {
-    flex: 1;
-}
-
-.step-input-row label {
-    display: block;
+.step-field label {
     font-size: 12px;
-    margin-bottom: 3px;
-    color: #666;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #646970;
 }
 
-.step-input-row input,
-.step-input-row textarea {
+.step-field input,
+.step-field textarea {
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
     width: 100%;
 }
 
-.step-input-row .small-text {
-    width: 100%;
+.step-field textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.step-field-full {
+    grid-column: span 2;
+}
+
+/* Botão de Remover Etapa */
+.mla-step-header .button-link-delete {
+    padding: 4px;
+    height: auto;
+    width: auto;
+    min-height: 0;
+    line-height: 1;
+    color: #d63638;
+}
+
+.mla-step-header .button-link-delete:hover {
+    color: #b32d2e;
 }
 
 .text-error {
     color: #d63638 !important;
 }
 
-.mla-step-item .button-link-delete {
-    margin-left: 10px;
-    padding-top: 5px;
+/* Empty State / Bottom Actions */
+.mla-template-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-start;
+}
+
+@media (max-width: 600px) {
+    .step-field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .step-field-full {
+        grid-column: span 1;
+    }
 }

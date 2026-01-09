@@ -24,7 +24,7 @@ if (!defined('WPINC')) {
 /**
  * Versão atual do plugin.
  */
-define('MLA_VERSION', '1.0.4');
+define('MLA_VERSION', '1.0.5');
 
 /**
  * Caminho absoluto do diretório do plugin.
