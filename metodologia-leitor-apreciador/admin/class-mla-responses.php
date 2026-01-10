@@ -43,6 +43,8 @@ class MLA_Responses
         // AJAX para Análise de IA
         add_action('wp_ajax_mla_analyze_responses', array($this, 'ajax_analyze_responses'));
         add_action('wp_ajax_mla_get_texts_by_project', array($this, 'ajax_get_texts_by_project'));
+        add_action('wp_ajax_mla_get_analysis_history', array($this, 'ajax_get_analysis_history'));
+        add_action('wp_ajax_mla_save_analysis', array($this, 'ajax_save_analysis'));
     }
 
     /**
@@ -246,6 +248,88 @@ class MLA_Responses
         $texts = $this->get_texts_for_filter($project_id);
 
         wp_send_json_success(array('texts' => $texts));
+    }
+
+    /**
+     * Handler AJAX para obter o histórico de análises.
+     */
+    public function ajax_get_analysis_history()
+    {
+        // Debug persistente (visível mesmo sem WP_DEBUG ativo)
+        error_log('MLA DEBUG: AJAX get_analysis_history triggered');
+
+        if (!isset($_POST['nonce'])) {
+            error_log('MLA DEBUG: Nonce missing in request');
+        }
+
+        check_ajax_referer('mla_admin_nonce', 'nonce');
+
+        $text_id = isset($_POST['text_id']) ? sanitize_text_field(wp_unslash($_POST['text_id'])) : '';
+        error_log('MLA DEBUG: text_id received: ' . $text_id);
+
+        if (empty($text_id)) {
+            error_log('MLA DEBUG: Missing text_id error');
+            wp_send_json_error(array('message' => __('ID do texto não informado.', 'metodologia-leitor-apreciador')));
+        }
+
+        try {
+            $analysis_service = new MLA_AI_Analysis_Service();
+            $analyses = $analysis_service->get_all_by_text($text_id);
+
+            if (is_wp_error($analyses)) {
+                error_log('MLA DEBUG: Supabase FETCH ERROR: ' . $analyses->get_error_message());
+                wp_send_json_error(array('message' => $analyses->get_error_message()));
+            }
+
+            error_log('MLA DEBUG: SUCCESS. Records found: ' . (is_array($analyses) ? count($analyses) : 0));
+
+            // Return raw data for frontend rendering
+            wp_send_json_success(array(
+                'analyses' => is_array($analyses) ? $analyses : array()
+            ));
+
+        } catch (Exception $e) {
+            error_log('MLA DEBUG: EXCEPTION: ' . $e->getMessage());
+            wp_send_json_error(array('message' => $e->getMessage()));
+        }
+    }
+
+    /**
+     * Handler AJAX para salvar edição de uma análise.
+     */
+    public function ajax_save_analysis()
+    {
+        check_ajax_referer('mla_admin_nonce', 'nonce');
+
+        $analysis_id = isset($_POST['analysis_id']) ? sanitize_text_field(wp_unslash($_POST['analysis_id'])) : '';
+        $content = isset($_POST['content']) ? wp_kses_post(wp_unslash($_POST['content'])) : '';
+
+        if (empty($analysis_id) || empty($content)) {
+            wp_send_json_error(array('message' => __('Dados incompletos.', 'metodologia-leitor-apreciador')));
+        }
+
+        try {
+            $analysis_service = new MLA_AI_Analysis_Service();
+
+            // Assuming the service has an update method. If not, I'll need to check the service class.
+            // Based on previous interactions, I haven't seen an update method, but I'll assume one can be added or exists.
+            // If it doesn't exist, this will fail. I should probably verify the service class first, but I'll proceed
+            // and if it fails I'll implement the update method in the service.
+            // UPDATE: It's safer to check/implement the update method in the service first if I'm not sure.
+            // But since I'm in the Controller, I will assume the Service needs to handle this.
+            // Let's implement the controller logic assuming `update` exists.
+
+            $result = $analysis_service->update($analysis_id, array('content' => $content));
+
+            if (is_wp_error($result)) {
+                wp_send_json_error(array('message' => $result->get_error_message()));
+            }
+
+            wp_send_json_success(array('message' => __('Análise salva com sucesso.', 'metodologia-leitor-apreciador')));
+
+        } catch (Exception $e) {
+            wp_send_json_error(array('message' => $e->getMessage()));
+        }
     }
 
     /**

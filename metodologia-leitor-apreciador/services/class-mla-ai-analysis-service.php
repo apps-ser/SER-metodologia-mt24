@@ -97,4 +97,34 @@ class MLA_AI_Analysis_Service
 
         return $result;
     }
+
+    /**
+     * Atualiza uma análise existente.
+     *
+     * @param string $id   ID da análise (UUID do Supabase).
+     * @param array  $data Dados a serem atualizados (ex: array('content' => '...')).
+     *
+     * @return array|WP_Error Resultado ou erro.
+     */
+    public function update($id, $data)
+    {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('MLA Update Analysis attempt: id=' . $id);
+        }
+
+        $result = $this->client->patch(
+            self::TABLE_NAME,
+            array('id' => 'eq.' . $id),
+            $data,
+            true
+        );
+
+        if (is_wp_error($result)) {
+            error_log('MLA Update Analysis FAILED: ' . $result->get_error_message());
+        } else {
+            error_log('MLA Update Analysis SUCCESS');
+        }
+
+        return $result;
+    }
 }

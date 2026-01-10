@@ -65,11 +65,11 @@ if (!defined('WPINC')) {
                     <span class="dashicons dashicons-admin-appearance" style="margin-top:4px;"></span>
                     <?php esc_html_e('Analisar com IA', 'metodologia-leitor-apreciador'); ?>
                 </button>
-                <a href="<?php echo esc_url($history_url); ?>" id="mla-view-history"
-                    class="button <?php echo $has_text ? '' : 'disabled'; ?>" <?php echo $has_text ? '' : 'style="pointer-events: none; opacity: 0.5;"'; ?>>
+                <button type="button" id="mla-view-history" class="button <?php echo $has_text ? '' : 'disabled'; ?>"
+                    data-text-id="<?php echo esc_attr($filters['text_id']); ?>" <?php echo $has_text ? '' : 'disabled="disabled"'; ?>>
                     <span class="dashicons dashicons-backup" style="margin-top:4px;"></span>
                     <?php esc_html_e('Ver Histórico', 'metodologia-leitor-apreciador'); ?>
-                </a>
+                </button>
                 |
                 <a href="<?php echo esc_url(MLA_Export::get_export_url('csv', $filters)); ?>" class="button">
                     <?php esc_html_e('Exportar CSV', 'metodologia-leitor-apreciador'); ?>
@@ -90,6 +90,47 @@ if (!defined('WPINC')) {
             </p>
             <div class="mla-progress-bar">
                 <div class="mla-progress-value"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Histórico de Análises -->
+    <div id="mla-history-modal" style="display:none;"
+        title="<?php esc_attr_e('Gerenciador de Análises', 'metodologia-leitor-apreciador'); ?>">
+        <!-- View 1: Lista de Análises -->
+        <div id="mla-history-list-view">
+            <div id="mla-history-list-content">
+                <div class="mla-loading-history">
+                    <span class="spinner is-active" style="float:none; margin:0 10px 0 0;"></span>
+                    <?php esc_html_e('Carregando histórico...', 'metodologia-leitor-apreciador'); ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- View 2: Editor de Análise -->
+        <div id="mla-history-editor-view" style="display:none;">
+            <div id="mla-editor-status"></div>
+            <div class="mla-editor-header">
+                <button type="button" class="button button-secondary" id="mla-editor-back">
+                    <span class="dashicons dashicons-arrow-left-alt"></span>
+                    <?php esc_html_e('Voltar', 'metodologia-leitor-apreciador'); ?>
+                </button>
+                <div class="mla-editor-meta">
+                    <span id="mla-editor-date"></span>
+                    <span id="mla-editor-model" class="mla-badge"></span>
+                </div>
+                <div class="mla-editor-actions">
+                    <button type="button" class="button button-secondary" id="mla-editor-export">
+                        <span class="dashicons dashicons-download"></span>
+                        <?php esc_html_e('Exportar', 'metodologia-leitor-apreciador'); ?>
+                    </button>
+                    <button type="button" class="button button-primary" id="mla-editor-save">
+                        <?php esc_html_e('Salvar Alterações', 'metodologia-leitor-apreciador'); ?>
+                    </button>
+                </div>
+            </div>
+            <div class="mla-editor-body">
+                <textarea id="mla-analysis-editor"></textarea>
             </div>
         </div>
     </div>

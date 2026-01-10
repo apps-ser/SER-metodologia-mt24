@@ -40,6 +40,13 @@ class MLA_Admin
             'all'
         );
 
+        wp_enqueue_style(
+            'mla-easymde',
+            'https://unpkg.com/easymde/dist/easymde.min.css',
+            array(),
+            '2.18.0'
+        );
+
         wp_enqueue_style('wp-jquery-ui-dialog');
     }
 
@@ -58,9 +65,17 @@ class MLA_Admin
         }
 
         wp_enqueue_script(
+            'mla-easymde',
+            'https://unpkg.com/easymde/dist/easymde.min.js',
+            array(),
+            '2.18.0',
+            true
+        );
+
+        wp_enqueue_script(
             'mla-admin',
             MLA_PLUGIN_URL . 'assets/js/mla-admin.js',
-            array('jquery', 'jquery-ui-dialog'),
+            array('jquery', 'jquery-ui-dialog', 'mla-easymde'),
             MLA_VERSION,
             true
         );
