@@ -550,3 +550,11 @@
 .lms-topic-sidebar-wrapper .lms-topic-sidebar-data {
     position: static !important;
 }
+
+/* LearnDash Integration: Hide default mark complete button when MLA is active */
+.sfwd-lessons-template-default .learndash_mark_complete_button,
+.sfwd-topic-template-default .learndash_mark_complete_button,
+.ld-lesson-complete,
+.ld-topic-complete {
+    display: none !important;
+}

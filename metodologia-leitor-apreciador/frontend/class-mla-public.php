@@ -132,6 +132,7 @@ class MLA_Public
                 'confirmTitle' => __('Confirmar Submissão', 'metodologia-leitor-apreciador'),
                 'cancel' => __('Cancelar', 'metodologia-leitor-apreciador'),
                 'confirm' => __('Confirmar', 'metodologia-leitor-apreciador'),
+                'learndashCompletion' => isset($settings['learndash_completion_message']) ? $settings['learndash_completion_message'] : __('Etapa do curso concluída! Você já pode prosseguir para a próxima aula.', 'metodologia-leitor-apreciador'),
             ),
         ));
     }
@@ -324,9 +325,23 @@ class MLA_Public
             ), 400);
         }
 
+        // Integração com LearnDash: Marcar como concluído se estiver em uma lição/tópico
+        $ld_completed = false;
+        if (function_exists('learndash_process_mark_complete') && !empty($result['text_id'])) {
+            $post_id = intval($result['text_id']);
+            $post_type = get_post_type($post_id);
+
+            if (in_array($post_type, array('sfwd-lessons', 'sfwd-topic'), true)) {
+                $user_id = get_current_user_id();
+                // Tenta marcar como concluído no LearnDash
+                $ld_completed = learndash_process_mark_complete($user_id, $post_id);
+            }
+        }
+
         return new WP_REST_Response(array(
             'success' => true,
             'response' => $result,
+            'learndash_completed' => $ld_completed,
         ), 200);
     }
 }

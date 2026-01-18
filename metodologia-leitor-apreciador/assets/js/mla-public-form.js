@@ -651,7 +651,7 @@
                     success: function (response) {
                         if (response.success) {
                             state.status = 'submitted';
-                            showSuccess();
+                            showSuccess(response.learndash_completed);
                             showToast(mlaSettings.i18n.submitted, 'success');
                         } else {
                             showToast(response.message || mlaSettings.i18n.error, 'error');
@@ -674,11 +674,15 @@
     /**
      * Mostrar mensagem de sucesso
      */
-    function showSuccess() {
+    function showSuccess(learndashCompleted) {
         $form.hide();
         $wrapper.find('.mla-step-summary').hide();
         $successMessage.show();
         $wrapper.find('.mla-progress-bar').hide();
+
+        if (learndashCompleted) {
+            $successMessage.find('p').first().after('<p class="mla-ld-notice"><strong>✓ ' + mlaSettings.i18n.learndashCompletion + '</strong></p>');
+        }
 
         // Resetar estado do botão submit para uso futuro
         $btnSubmit.prop('disabled', false).html(mlaSettings.i18n.submitButton);

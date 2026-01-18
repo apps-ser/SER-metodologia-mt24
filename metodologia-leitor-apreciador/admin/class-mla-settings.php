@@ -200,6 +200,22 @@ class MLA_Settings
             'mla-settings',
             'mla_ai_section'
         );
+
+        // Seção: LearnDash
+        add_settings_section(
+            'mla_learndash_section',
+            __('Integração LearnDash', 'metodologia-leitor-apreciador'),
+            array($this, 'render_learndash_section'),
+            'mla-settings'
+        );
+
+        add_settings_field(
+            'learndash_completion_message',
+            __('Mensagem de Conclusão', 'metodologia-leitor-apreciador'),
+            array($this, 'render_learndash_completion_message_field'),
+            'mla-settings',
+            'mla_learndash_section'
+        );
     }
 
     /**
@@ -478,6 +494,20 @@ Formato de Saída (Markdown):
         echo '<p class="description">' . __('Descreva a Metodologia Mateus 24. Este texto será enviado à IA como contexto para ajudar na análise.', 'metodologia-leitor-apreciador') . '</p>';
     }
 
+    public function render_learndash_section()
+    {
+        echo '<p>' . esc_html__('Configure como o formulário interage com o LearnDash LMS.', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
+    public function render_learndash_completion_message_field()
+    {
+        $settings = get_option(self::OPTION_KEY, array());
+        $default = __('Etapa do curso concluída! Você já pode prosseguir para a próxima aula.', 'metodologia-leitor-apreciador');
+        $value = isset($settings['learndash_completion_message']) ? $settings['learndash_completion_message'] : $default;
+        printf('<input type="text" name="%s[learndash_completion_message]" value="%s" class="large-text">', esc_attr(self::OPTION_KEY), esc_attr($value));
+        echo '<p class="description">' . __('Esta mensagem aparecerá após a submissão bem-sucedida em uma aula do LearnDash.', 'metodologia-leitor-apreciador') . '</p>';
+    }
+
     public function render_autosave_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
@@ -604,6 +634,10 @@ Formato de Saída (Markdown):
 
         if (isset($input['methodology_explanation'])) {
             $sanitized['methodology_explanation'] = wp_kses_post($input['methodology_explanation']);
+        }
+
+        if (isset($input['learndash_completion_message'])) {
+            $sanitized['learndash_completion_message'] = sanitize_text_field($input['learndash_completion_message']);
         }
 
         return $sanitized;
