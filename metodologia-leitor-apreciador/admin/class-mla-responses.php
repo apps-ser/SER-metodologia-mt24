@@ -59,6 +59,9 @@ class MLA_Responses
             wp_die(esc_html__('Você não tem permissão para acessar esta página.', 'metodologia-leitor-apreciador'));
         }
 
+        // Processar ações
+        $this->process_actions();
+
         // Determinar visualização
         $view = isset($_GET['view']) ? sanitize_text_field(wp_unslash($_GET['view'])) : 'list';
 
@@ -76,6 +79,41 @@ class MLA_Responses
     }
 
     /**
+     * Processa ações de lista.
+     */
+    private function process_actions()
+    {
+        if (!isset($_POST['mla_response_nonce'])) {
+            return;
+        }
+
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['mla_response_nonce'])), 'mla_response_action')) {
+            wp_die(esc_html__('Verificação de segurança falhou.', 'metodologia-leitor-apreciador'));
+        }
+
+        $action = isset($_POST['mla_action']) ? sanitize_text_field(wp_unslash($_POST['mla_action'])) : '';
+        $response_id = isset($_POST['response_id']) ? sanitize_text_field(wp_unslash($_POST['response_id'])) : '';
+
+        if (empty($response_id))
+            return;
+
+        switch ($action) {
+            case 'archive':
+                $this->service->archive($response_id);
+                wp_safe_redirect(add_query_arg(array('page' => 'mla-responses', 'message' => 'archived'), admin_url('admin.php')));
+                exit;
+            case 'restore':
+                $this->service->restore($response_id);
+                wp_safe_redirect(add_query_arg(array('page' => 'mla-responses', 'message' => 'restored'), admin_url('admin.php')));
+                exit;
+            case 'delete':
+                $this->service->delete($response_id);
+                wp_safe_redirect(add_query_arg(array('page' => 'mla-responses', 'message' => 'deleted'), admin_url('admin.php')));
+                exit;
+        }
+    }
+
+    /**
      * Renderiza a lista de respostas.
      *
      * @return void
@@ -88,6 +126,7 @@ class MLA_Responses
             'text_id' => isset($_GET['text_id']) ? sanitize_text_field(wp_unslash($_GET['text_id'])) : '',
             'wp_user_id' => isset($_GET['user_id']) ? intval($_GET['user_id']) : '',
             'status' => isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '',
+            'is_archived' => isset($_GET['is_archived']) ? sanitize_text_field(wp_unslash($_GET['is_archived'])) : 'false',
         );
 
         // Paginação
@@ -310,15 +349,6 @@ class MLA_Responses
 
         try {
             $analysis_service = new MLA_AI_Analysis_Service();
-
-            // Assuming the service has an update method. If not, I'll need to check the service class.
-            // Based on previous interactions, I haven't seen an update method, but I'll assume one can be added or exists.
-            // If it doesn't exist, this will fail. I should probably verify the service class first, but I'll proceed
-            // and if it fails I'll implement the update method in the service.
-            // UPDATE: It's safer to check/implement the update method in the service first if I'm not sure.
-            // But since I'm in the Controller, I will assume the Service needs to handle this.
-            // Let's implement the controller logic assuming `update` exists.
-
             $result = $analysis_service->update($analysis_id, array('content' => $content));
 
             if (is_wp_error($result)) {

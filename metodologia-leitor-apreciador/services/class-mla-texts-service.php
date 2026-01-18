@@ -49,6 +49,7 @@ class MLA_Texts_Service
     {
         $defaults = array(
             'project_id' => '',
+            'status' => 'active', // Default to active
             'order' => 'created_at.desc',
             'limit' => 100,
         );
@@ -58,6 +59,11 @@ class MLA_Texts_Service
             'order' => $args['order'],
             'limit' => $args['limit'],
         );
+
+        // If status is 'all', do not filter by status
+        if ($args['status'] !== 'all') {
+            $filters['status'] = 'eq.' . $args['status'];
+        }
 
         if (!empty($args['project_id'])) {
             $filters['project_id'] = 'eq.' . $args['project_id'];
@@ -127,6 +133,7 @@ class MLA_Texts_Service
             'wp_post_id' => intval($wp_post_id),
             'title' => sanitize_text_field($title),
             'project_id' => !empty($project_id) ? $project_id : null,
+            'status' => 'active', // Ensure new texts are active
         );
 
         if ($existing) {
@@ -174,5 +181,33 @@ class MLA_Texts_Service
         }
 
         return count($responses);
+    }
+
+    /**
+     * Arquiva um texto (Soft Delete).
+     *
+     * @param string $id UUID do texto.
+     *
+     * @return array|WP_Error Texto atualizado ou erro.
+     */
+    public function archive($id)
+    {
+        return $this->client->patch(self::TABLE_NAME, array(
+            'id' => 'eq.' . $id,
+        ), array('status' => 'archived'), true);
+    }
+
+    /**
+     * Restaura um texto arquivado.
+     *
+     * @param string $id UUID do texto.
+     *
+     * @return array|WP_Error Texto atualizado ou erro.
+     */
+    public function restore($id)
+    {
+        return $this->client->patch(self::TABLE_NAME, array(
+            'id' => 'eq.' . $id,
+        ), array('status' => 'active'), true);
     }
 }

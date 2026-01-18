@@ -14,7 +14,9 @@ if (!defined('WPINC')) {
     die;
 }
 
+$current_status = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : 'active';
 $texts_controller = new MLA_Texts();
+$message = isset($_GET['message']) ? sanitize_text_field(wp_unslash($_GET['message'])) : '';
 ?>
 
 <div class="wrap">
@@ -23,10 +25,40 @@ $texts_controller = new MLA_Texts();
     </h1>
     <hr class="wp-header-end">
 
+    <?php
+    if ('archived' === $message) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Texto arquivado com sucesso.', 'metodologia-leitor-apreciador') . '</p></div>';
+    } elseif ('restored' === $message) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Texto restaurado com sucesso.', 'metodologia-leitor-apreciador') . '</p></div>';
+    }
+    ?>
+
+    <ul class="subsubsub">
+        <li class="all">
+            <a href="<?php echo esc_url(add_query_arg(array('status' => 'active', 'paged' => 1), remove_query_arg('message'))); ?>"
+                class="<?php echo 'active' === $current_status ? 'current' : ''; ?>">
+                <?php esc_html_e('Ativos', 'metodologia-leitor-apreciador'); ?>
+            </a> |
+        </li>
+        <li class="archived">
+            <a href="<?php echo esc_url(add_query_arg(array('status' => 'archived', 'paged' => 1), remove_query_arg('message'))); ?>"
+                class="<?php echo 'archived' === $current_status ? 'current' : ''; ?>">
+                <?php esc_html_e('Arquivados', 'metodologia-leitor-apreciador'); ?>
+            </a> |
+        </li>
+        <li class="all_status">
+            <a href="<?php echo esc_url(add_query_arg(array('status' => 'all', 'paged' => 1), remove_query_arg('message'))); ?>"
+                class="<?php echo 'all' === $current_status ? 'current' : ''; ?>">
+                <?php esc_html_e('Todos', 'metodologia-leitor-apreciador'); ?>
+            </a>
+        </li>
+    </ul>
+
     <!-- Filtros -->
     <div class="tablenav top">
         <form method="get" action="">
             <input type="hidden" name="page" value="mla-texts">
+            <input type="hidden" name="status" value="<?php echo esc_attr($current_status); ?>">
 
             <div class="alignleft actions">
                 <select name="project_id">
@@ -50,8 +82,10 @@ $texts_controller = new MLA_Texts();
     <?php if (empty($texts)): ?>
         <div class="notice notice-info">
             <p>
-                <?php esc_html_e('Nenhum texto com a metodologia ativa encontrado.', 'metodologia-leitor-apreciador'); ?>
-                <?php esc_html_e('Para ativar a metodologia em um texto, edite um post ou página e marque a opção na metabox "Metodologia Mateus 24".', 'metodologia-leitor-apreciador'); ?>
+                <?php esc_html_e('Nenhum texto encontrado com os filtros selecionados.', 'metodologia-leitor-apreciador'); ?>
+                <?php if ('active' === $current_status): ?>
+                    <?php esc_html_e('Para ativar a metodologia em um texto, edite um post ou página e marque a opção na metabox "Metodologia Mateus 24".', 'metodologia-leitor-apreciador'); ?>
+                <?php endif; ?>
             </p>
         </div>
     <?php else: ?>
@@ -84,6 +118,8 @@ $texts_controller = new MLA_Texts();
                     $project_id = get_post_meta($text->ID, '_mla_project_id', true);
                     $project_name = isset($projects[$project_id]) ? $projects[$project_id] : '—';
                     $text_id = get_post_meta($text->ID, '_mla_text_id', true);
+                    // Fallback se não tiver meta, tentar buscar pelo ID via controller (pode ser lento em loop, melhor confiar no meta syncado)
+            
                     $response_count = $texts_controller->get_response_count($text->ID);
                     ?>
                     <tr>
@@ -123,13 +159,31 @@ $texts_controller = new MLA_Texts();
                             <?php echo esc_html(get_the_date('', $text)); ?>
                         </td>
                         <td class="column-actions">
-                            <a href="<?php echo esc_url(get_edit_post_link($text->ID)); ?>">
+                            <a href="<?php echo esc_url(get_edit_post_link($text->ID)); ?>" class="button button-small">
                                 <?php esc_html_e('Editar', 'metodologia-leitor-apreciador'); ?>
                             </a>
                             <?php if ($text_id): ?>
-                                |
-                                <a href="<?php echo esc_url(admin_url('admin.php?page=mla-responses&text_id=' . $text_id)); ?>">
-                                    <?php esc_html_e('Ver Respostas', 'metodologia-leitor-apreciador'); ?>
+                                <?php if ('active' === $current_status): ?>
+                                    <button type="button" class="button button-small"
+                                        onclick="mla_submit_action('archive', '<?php echo esc_attr($text_id); ?>')">
+                                        <?php esc_html_e('Arquivar', 'metodologia-leitor-apreciador'); ?>
+                                    </button>
+                                <?php elseif ('archived' === $current_status): ?>
+                                    <button type="button" class="button button-small"
+                                        onclick="mla_submit_action('restore', '<?php echo esc_attr($text_id); ?>')">
+                                        <?php esc_html_e('Restaurar', 'metodologia-leitor-apreciador'); ?>
+                                    </button>
+                                <?php else: ?>
+                                    <!-- Modo 'Todos': Botão condicional seria ideal mas status do loop é misto. Simplificando: mostrar ambos ou checar a origem? 
+                                    Como estamos listando WP posts, e o status 'archived' está no Supabase, precisariamos do status individial aqui.
+                                    Para simplificar, no filtro 'Todos', não mostramos botões de arquivo/restauro ou assumimos ativo.
+                                    Melhor: adicionar lógica para saber status individual.
+                                    -->
+                                <?php endif; ?>
+
+                                <a href="<?php echo esc_url(admin_url('admin.php?page=mla-responses&text_id=' . $text_id)); ?>"
+                                    class="button button-small">
+                                    <?php esc_html_e('Respostas', 'metodologia-leitor-apreciador'); ?>
                                 </a>
                             <?php endif; ?>
                         </td>
@@ -138,6 +192,21 @@ $texts_controller = new MLA_Texts();
             </tbody>
         </table>
     <?php endif; ?>
+
+    <!-- Formulário oculto para ações -->
+    <form id="mla-action-form" method="post" style="display:none;">
+        <?php wp_nonce_field('mla_text_action', 'mla_text_nonce'); ?>
+        <input type="hidden" name="mla_action" id="mla-action-input">
+        <input type="hidden" name="text_id" id="mla-id-input">
+    </form>
+
+    <script type="text/javascript">
+        function mla_submit_action(action, id) {
+            document.getElementById('mla-action-input').value = action;
+            document.getElementById('mla-id-input').value = id;
+            document.getElementById('mla-action-form').submit();
+        }
+    </script>
 </div>
 
 <style>
@@ -159,6 +228,6 @@ $texts_controller = new MLA_Texts();
     }
 
     .column-actions {
-        width: 150px;
+        width: 250px;
     }
 </style>

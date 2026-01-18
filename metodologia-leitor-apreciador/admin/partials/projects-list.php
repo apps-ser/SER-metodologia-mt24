@@ -12,6 +12,8 @@
 if (!defined('WPINC')) {
     die;
 }
+
+$current_status = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : 'active';
 ?>
 
 <div class="wrap">
@@ -31,11 +33,36 @@ if (!defined('WPINC')) {
         echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Projeto atualizado com sucesso.', 'metodologia-leitor-apreciador') . '</p></div>';
     } elseif ('deleted' === $message) {
         echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Projeto excluído com sucesso.', 'metodologia-leitor-apreciador') . '</p></div>';
+    } elseif ('archived' === $message) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Projeto arquivado com sucesso.', 'metodologia-leitor-apreciador') . '</p></div>';
+    } elseif ('restored' === $message) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Projeto restaurado com sucesso.', 'metodologia-leitor-apreciador') . '</p></div>';
     }
 
     // Exibir erros
     settings_errors('mla_projects');
     ?>
+
+    <ul class="subsubsub">
+        <li class="all">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=mla-projects&status=active')); ?>"
+                class="<?php echo 'active' === $current_status ? 'current' : ''; ?>">
+                <?php esc_html_e('Ativos', 'metodologia-leitor-apreciador'); ?>
+            </a> |
+        </li>
+        <li class="archived">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=mla-projects&status=archived')); ?>"
+                class="<?php echo 'archived' === $current_status ? 'current' : ''; ?>">
+                <?php esc_html_e('Arquivados', 'metodologia-leitor-apreciador'); ?>
+            </a> |
+        </li>
+        <li class="all_status">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=mla-projects&status=all')); ?>"
+                class="<?php echo 'all' === $current_status ? 'current' : ''; ?>">
+                <?php esc_html_e('Todos', 'metodologia-leitor-apreciador'); ?>
+            </a>
+        </li>
+    </ul>
 
     <?php if (is_wp_error($projects)): ?>
         <div class="notice notice-error">
@@ -46,7 +73,7 @@ if (!defined('WPINC')) {
     <?php elseif (empty($projects)): ?>
         <div class="notice notice-info">
             <p>
-                <?php esc_html_e('Nenhum projeto cadastrado. Crie o primeiro projeto para começar.', 'metodologia-leitor-apreciador'); ?>
+                <?php esc_html_e('Nenhum projeto encontrado.', 'metodologia-leitor-apreciador'); ?>
             </p>
         </div>
     <?php else: ?>
@@ -102,21 +129,48 @@ if (!defined('WPINC')) {
                             ?>
                         </td>
                         <td class="column-actions">
-                            <a
-                                href="<?php echo esc_url(admin_url('admin.php?page=mla-projects&action=edit&id=' . $project['id'])); ?>">
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=mla-projects&action=edit&id=' . $project['id'])); ?>"
+                                class="button button-small">
                                 <?php esc_html_e('Editar', 'metodologia-leitor-apreciador'); ?>
                             </a>
-                            |
-                            <a
-                                href="<?php echo esc_url(admin_url('admin.php?page=mla-responses&project_id=' . $project['id'])); ?>">
-                                <?php esc_html_e('Ver Respostas', 'metodologia-leitor-apreciador'); ?>
-                            </a>
+
+                            <?php if ('active' === $project['status']): ?>
+                                <button type="button" class="button button-small"
+                                    onclick="mla_submit_action('archive', '<?php echo esc_attr($project['id']); ?>')">
+                                    <?php esc_html_e('Arquivar', 'metodologia-leitor-apreciador'); ?>
+                                </button>
+                            <?php else: ?>
+                                <button type="button" class="button button-small"
+                                    onclick="mla_submit_action('restore', '<?php echo esc_attr($project['id']); ?>')">
+                                    <?php esc_html_e('Restaurar', 'metodologia-leitor-apreciador'); ?>
+                                </button>
+                            <?php endif; ?>
+
+                            <button type="button" class="button button-small button-link-delete"
+                                onclick="if(confirm('<?php esc_attr_e('Tem certeza que deseja excluir permanentemente este projeto?', 'metodologia-leitor-apreciador'); ?>')) mla_submit_action('delete', '<?php echo esc_attr($project['id']); ?>')">
+                                <?php esc_html_e('Excluir', 'metodologia-leitor-apreciador'); ?>
+                            </button>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
     <?php endif; ?>
+
+    <!-- Formulário oculto para ações -->
+    <form id="mla-action-form" method="post" style="display:none;">
+        <?php wp_nonce_field('mla_project_action', 'mla_project_nonce'); ?>
+        <input type="hidden" name="mla_action" id="mla-action-input">
+        <input type="hidden" name="project_id" id="mla-id-input">
+    </form>
+
+    <script type="text/javascript">
+        function mla_submit_action(action, id) {
+            document.getElementById('mla-action-input').value = action;
+            document.getElementById('mla-id-input').value = id;
+            document.getElementById('mla-action-form').submit();
+        }
+    </script>
 </div>
 
 <style>
@@ -147,6 +201,6 @@ if (!defined('WPINC')) {
     }
 
     .column-actions {
-        width: 150px;
+        width: 250px;
     }
 </style>

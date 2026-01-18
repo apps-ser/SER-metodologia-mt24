@@ -8,6 +8,9 @@
 if (!defined('WPINC')) {
     die;
 }
+
+$current_archived_status = isset($_GET['is_archived']) ? sanitize_text_field(wp_unslash($_GET['is_archived'])) : 'false';
+$message = isset($_GET['message']) ? sanitize_text_field(wp_unslash($_GET['message'])) : '';
 ?>
 
 <div class="wrap">
@@ -16,9 +19,42 @@ if (!defined('WPINC')) {
     </h1>
     <hr class="wp-header-end">
 
+    <?php
+    if ('archived' === $message) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Resposta arquivada com sucesso.', 'metodologia-leitor-apreciador') . '</p></div>';
+    } elseif ('restored' === $message) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Resposta restaurada com sucesso.', 'metodologia-leitor-apreciador') . '</p></div>';
+    } elseif ('deleted' === $message) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Resposta excluída com sucesso.', 'metodologia-leitor-apreciador') . '</p></div>';
+    }
+    ?>
+
+    <ul class="subsubsub">
+        <li class="all">
+            <a href="<?php echo esc_url(add_query_arg(array('is_archived' => 'false', 'paged' => 1), remove_query_arg('message'))); ?>"
+                class="<?php echo 'false' === $current_archived_status ? 'current' : ''; ?>">
+                <?php esc_html_e('Ativas', 'metodologia-leitor-apreciador'); ?>
+            </a> |
+        </li>
+        <li class="archived">
+            <a href="<?php echo esc_url(add_query_arg(array('is_archived' => 'true', 'paged' => 1), remove_query_arg('message'))); ?>"
+                class="<?php echo 'true' === $current_archived_status ? 'current' : ''; ?>">
+                <?php esc_html_e('Arquivadas', 'metodologia-leitor-apreciador'); ?>
+            </a> |
+        </li>
+        <li class="all_status">
+            <a href="<?php echo esc_url(add_query_arg(array('is_archived' => 'all', 'paged' => 1), remove_query_arg('message'))); ?>"
+                class="<?php echo 'all' === $current_archived_status ? 'current' : ''; ?>">
+                <?php esc_html_e('Todas', 'metodologia-leitor-apreciador'); ?>
+            </a>
+        </li>
+    </ul>
+
     <div class="tablenav top">
         <form method="get" action="">
             <input type="hidden" name="page" value="mla-responses">
+            <input type="hidden" name="is_archived" value="<?php echo esc_attr($current_archived_status); ?>">
+
             <div class="alignleft actions">
                 <select name="project_id" id="mla-filter-project">
                     <option value="">
@@ -184,15 +220,49 @@ if (!defined('WPINC')) {
                         <td>
                             <?php echo esc_html(wp_date('d/m/Y H:i', strtotime($response['updated_at']))); ?>
                         </td>
-                        <td><a
-                                href="<?php echo esc_url(admin_url('admin.php?page=mla-responses&view=detail&id=' . $response['id'])); ?>">
+                        <td>
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=mla-responses&view=detail&id=' . $response['id'])); ?>"
+                                class="button button-small">
                                 <?php esc_html_e('Ver', 'metodologia-leitor-apreciador'); ?>
-                            </a></td>
+                            </a>
+
+                            <?php if ($response['is_archived']): ?>
+                                <button type="button" class="button button-small"
+                                    onclick="mla_submit_action('restore', '<?php echo esc_attr($response['id']); ?>')">
+                                    <?php esc_html_e('Restaurar', 'metodologia-leitor-apreciador'); ?>
+                                </button>
+                            <?php else: ?>
+                                <button type="button" class="button button-small"
+                                    onclick="mla_submit_action('archive', '<?php echo esc_attr($response['id']); ?>')">
+                                    <?php esc_html_e('Arquivar', 'metodologia-leitor-apreciador'); ?>
+                                </button>
+                            <?php endif; ?>
+
+                            <button type="button" class="button button-small button-link-delete"
+                                onclick="if(confirm('<?php esc_attr_e('Tem certeza que deseja excluir permanentemente esta resposta?', 'metodologia-leitor-apreciador'); ?>')) mla_submit_action('delete', '<?php echo esc_attr($response['id']); ?>')">
+                                <?php esc_html_e('Excluir', 'metodologia-leitor-apreciador'); ?>
+                            </button>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
     <?php endif; ?>
+
+    <!-- Formulário oculto para ações -->
+    <form id="mla-action-form" method="post" style="display:none;">
+        <?php wp_nonce_field('mla_response_action', 'mla_response_nonce'); ?>
+        <input type="hidden" name="mla_action" id="mla-action-input">
+        <input type="hidden" name="response_id" id="mla-id-input">
+    </form>
+
+    <script type="text/javascript">
+        function mla_submit_action(action, id) {
+            document.getElementById('mla-action-input').value = action;
+            document.getElementById('mla-id-input').value = id;
+            document.getElementById('mla-action-form').submit();
+        }
+    </script>
 </div>
 <style>
     .mla-badge {

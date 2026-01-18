@@ -91,6 +91,12 @@ class MLA_Projects
             case 'delete':
                 $this->handle_delete();
                 break;
+            case 'archive':
+                $this->handle_archive();
+                break;
+            case 'restore':
+                $this->handle_restore();
+                break;
         }
     }
 
@@ -200,6 +206,44 @@ class MLA_Projects
     }
 
     /**
+     * Processa arquivamento de projeto.
+     */
+    private function handle_archive()
+    {
+        $id = isset($_POST['project_id']) ? sanitize_text_field(wp_unslash($_POST['project_id'])) : '';
+        if (empty($id))
+            return;
+
+        $result = $this->service->update($id, array('status' => 'archived'));
+
+        if (is_wp_error($result)) {
+            add_settings_error('mla_projects', 'archive_error', $result->get_error_message(), 'error');
+        } else {
+            wp_safe_redirect(add_query_arg(array('page' => 'mla-projects', 'message' => 'archived'), admin_url('admin.php')));
+            exit;
+        }
+    }
+
+    /**
+     * Processa restauração de projeto.
+     */
+    private function handle_restore()
+    {
+        $id = isset($_POST['project_id']) ? sanitize_text_field(wp_unslash($_POST['project_id'])) : '';
+        if (empty($id))
+            return;
+
+        $result = $this->service->update($id, array('status' => 'active'));
+
+        if (is_wp_error($result)) {
+            add_settings_error('mla_projects', 'restore_error', $result->get_error_message(), 'error');
+        } else {
+            wp_safe_redirect(add_query_arg(array('page' => 'mla-projects', 'message' => 'restored'), admin_url('admin.php')));
+            exit;
+        }
+    }
+
+    /**
      * Renderiza a lista de projetos.
      *
      * @return void
@@ -208,9 +252,12 @@ class MLA_Projects
     {
         // Exibir mensagens
         $message = isset($_GET['message']) ? sanitize_text_field(wp_unslash($_GET['message'])) : '';
+        $status = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : 'active';
 
         // Obter projetos
-        $projects = $this->service->get_all();
+        $projects = $this->service->get_all(array(
+            'status' => $status
+        ));
 
         include MLA_PLUGIN_DIR . 'admin/partials/projects-list.php';
     }

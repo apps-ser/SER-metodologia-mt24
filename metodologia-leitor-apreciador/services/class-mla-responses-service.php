@@ -57,6 +57,7 @@ class MLA_Responses_Service
             'text_id' => '',
             'wp_user_id' => '',
             'status' => '',
+            'is_archived' => 'false', // Default to not archived
             'order' => 'updated_at.desc',
             'limit' => 50,
             'offset' => 0,
@@ -83,6 +84,11 @@ class MLA_Responses_Service
 
         if (!empty($args['status'])) {
             $filters['status'] = 'eq.' . $args['status'];
+        }
+
+        // If is_archived is 'all', do not filter by is_archived
+        if ($args['is_archived'] !== 'all') {
+            $filters['is_archived'] = 'is.' . ($args['is_archived'] === 'true' || $args['is_archived'] === true ? 'true' : 'false');
         }
 
         return $this->client->get(self::TABLE_NAME, $filters, true);
@@ -302,6 +308,48 @@ class MLA_Responses_Service
         }
 
         return count($result);
+    }
+
+    /**
+     * Arquiva uma resposta (Soft Delete).
+     *
+     * @param string $id UUID da resposta.
+     *
+     * @return array|WP_Error Resposta atualizada ou erro.
+     */
+    public function archive($id)
+    {
+        return $this->client->patch(self::TABLE_NAME, array(
+            'id' => 'eq.' . $id,
+        ), array('is_archived' => true), true);
+    }
+
+    /**
+     * Restaura uma resposta arquivada.
+     *
+     * @param string $id UUID da resposta.
+     *
+     * @return array|WP_Error Resposta atualizada ou erro.
+     */
+    public function restore($id)
+    {
+        return $this->client->patch(self::TABLE_NAME, array(
+            'id' => 'eq.' . $id,
+        ), array('is_archived' => false), true);
+    }
+
+    /**
+     * Deleta permanentemente uma resposta.
+     *
+     * @param string $id UUID da resposta.
+     *
+     * @return bool|WP_Error True em sucesso ou erro.
+     */
+    public function delete($id)
+    {
+        return $this->client->delete(self::TABLE_NAME, array(
+            'id' => 'eq.' . $id,
+        ), true);
     }
 
     /**
