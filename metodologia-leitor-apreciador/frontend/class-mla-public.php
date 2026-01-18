@@ -353,6 +353,15 @@ class MLA_Public
                 $post_id = intval($text_record['wp_post_id']);
                 $post_type = get_post_type($post_id);
 
+                // Se o ID for de uma revisão, precisamos do ID do post original
+                if ('revision' === $post_type) {
+                    $parent_id = wp_get_post_parent_id($post_id);
+                    if ($parent_id) {
+                        $post_id = $parent_id;
+                        $post_type = get_post_type($post_id);
+                    }
+                }
+
                 $debug_ld['wp_post_id'] = $post_id;
                 $debug_ld['post_type'] = $post_type;
 
