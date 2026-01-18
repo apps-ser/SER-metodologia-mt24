@@ -334,26 +334,52 @@ class MLA_Public
             if ($text_record && !empty($text_record['wp_post_id'])) {
                 $post_id = intval($text_record['wp_post_id']);
                 $post_type = get_post_type($post_id);
+                $user_id = get_current_user_id();
 
                 if (in_array($post_type, array('sfwd-lessons', 'sfwd-topic'), true)) {
-                    $user_id = get_current_user_id();
                     $course_id = function_exists('learndash_get_course_id') ? learndash_get_course_id($post_id) : 0;
 
-                    // Tenta marcar como concluído no LearnDash
-                    $ld_completed = learndash_process_mark_complete($user_id, $post_id, false, $course_id);
+                    // Se learndash_get_course_id falhar em contexto REST, tenta via meta (comum em LD)
+                    if (empty($course_id)) {
+                        $course_id = get_post_meta($post_id, 'course_id', true);
+                    }
+
+                    // DEBUG LOG
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log(sprintf('MLA LearnDash Attempt: User %d, Post %d (%s), Course %s', $user_id, $post_id, $post_type, $course_id));
+                    }
+
+                    // Tenta marcar como concluído no LearnDash - Usando o parâmetro 'force' (5º parâmetro) como true
+                    // para garantir a conclusão mesmo se houver pre-requisitos (como vídeos ou ordem de lição).
+                    $ld_completed = learndash_process_mark_complete($user_id, $post_id, false, (int) $course_id, true);
+
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log(sprintf('MLA LearnDash Result (Primary): %s', $ld_completed ? 'Success' : 'Failed'));
+                    }
 
                     // Fallback: se a função principal retornar false, tenta forçar via atividade do usuário
-                    // Isso é útil se houver restrições de LearnDash que impedem a conclusão normal mas queremos forçar pela metodologia.
                     if (!$ld_completed && function_exists('learndash_update_user_activity')) {
+                        // Mapeamento correto de tipos de atividade para LearnDash
+                        $activity_type = 'lesson';
+                        if ('sfwd-topic' === $post_type) {
+                            $activity_type = 'topic';
+                        }
+
                         learndash_update_user_activity(array(
                             'user_id' => $user_id,
                             'post_id' => $post_id,
-                            'course_id' => $course_id,
-                            'activity_type' => 'lesson' === $post_type ? 'lesson' : ('topic' === $post_type ? 'topic' : $post_type),
+                            'course_id' => (int) $course_id,
+                            'activity_type' => $activity_type,
                             'activity_status' => true,
                             'activity_completed' => time(),
+                            'activity_updated' => time(),
                         ));
-                        $ld_completed = true; // Forçamos o feedback positivo para o usuário
+
+                        $ld_completed = true;
+
+                        if (defined('WP_DEBUG') && WP_DEBUG) {
+                            error_log(sprintf('MLA LearnDash Fallback Triggered for %s', $activity_type));
+                        }
                     }
 
                     // Se falhar (ex: por causa de pré-requisitos), tenta forçar via meta
@@ -361,6 +387,10 @@ class MLA_Public
                         // Às vezes o learndash_process_mark_complete é rigoroso demais
                         // No entanto, vamos logar se possível ou apenas retornar o status
                     }
+                }
+            } else {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('MLA LearnDash Error: Text Record or WP Post ID not found for text_id ' . $result['text_id']);
                 }
             }
         }
