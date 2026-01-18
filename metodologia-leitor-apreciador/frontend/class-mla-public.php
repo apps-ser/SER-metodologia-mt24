@@ -327,39 +327,53 @@ class MLA_Public
 
         // Integração com LearnDash: Marcar como concluído se estiver em uma lição/tópico
         $ld_completed = false;
+        $user_id = get_current_user_id();
+
         if (function_exists('learndash_process_mark_complete') && !empty($result['text_id'])) {
+            // Fallback para user_id se estiver em contexto onde get_current_user_id() falha (raro com nonce mas possível em algumas configs)
+            if (!$user_id && !empty($result['wp_user_id'])) {
+                $user_id = intval($result['wp_user_id']);
+            }
+
+            $debug_ld = array(
+                'triggered' => false,
+                'text_id' => $result['text_id'],
+                'wp_post_id' => null,
+                'post_type' => null,
+                'course_id' => null,
+                'user_id' => $user_id,
+            );
+
             $texts_service = new MLA_Texts_Service();
             $text_record = $texts_service->get_by_id($result['text_id']);
 
-            if ($text_record && !empty($text_record['wp_post_id'])) {
+            if (is_wp_error($text_record)) {
+                $debug_ld['error'] = 'WP_Error on text_record: ' . $text_record->get_error_message();
+            } elseif ($text_record && !empty($text_record['wp_post_id'])) {
                 $post_id = intval($text_record['wp_post_id']);
                 $post_type = get_post_type($post_id);
-                $user_id = get_current_user_id();
+
+                $debug_ld['wp_post_id'] = $post_id;
+                $debug_ld['post_type'] = $post_type;
 
                 if (in_array($post_type, array('sfwd-lessons', 'sfwd-topic'), true)) {
+                    $debug_ld['triggered'] = true;
                     $course_id = function_exists('learndash_get_course_id') ? learndash_get_course_id($post_id) : 0;
 
-                    // Se learndash_get_course_id falhar em contexto REST, tenta via meta (comum em LD)
                     if (empty($course_id)) {
                         $course_id = get_post_meta($post_id, 'course_id', true);
                     }
 
-                    // DEBUG LOG
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log(sprintf('MLA LearnDash Attempt: User %d, Post %d (%s), Course %s', $user_id, $post_id, $post_type, $course_id));
-                    }
+                    $debug_ld['course_id'] = $course_id;
 
-                    // Tenta marcar como concluído no LearnDash - Usando o parâmetro 'force' (5º parâmetro) como true
-                    // para garantir a conclusão mesmo se houver pre-requisitos (como vídeos ou ordem de lição).
-                    $ld_completed = learndash_process_mark_complete($user_id, $post_id, false, (int) $course_id, true);
+                    // Tenta marcar como concluído no LearnDash 
+                    // Mudando 3º parâmetro para true (mark_complete) para seguir a documentação oficial.
+                    $ld_completed = learndash_process_mark_complete($user_id, $post_id, true, (int) $course_id, true);
 
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log(sprintf('MLA LearnDash Result (Primary): %s', $ld_completed ? 'Success' : 'Failed'));
-                    }
+                    $debug_ld['primary_result'] = $ld_completed;
 
-                    // Fallback: se a função principal retornar false, tenta forçar via atividade do usuário
+                    // Fallback: se a função principal retornar false, tenta marcar via atividade
                     if (!$ld_completed && function_exists('learndash_update_user_activity')) {
-                        // Mapeamento correto de tipos de atividade para LearnDash
                         $activity_type = 'lesson';
                         if ('sfwd-topic' === $post_type) {
                             $activity_type = 'topic';
@@ -376,29 +390,23 @@ class MLA_Public
                         ));
 
                         $ld_completed = true;
-
-                        if (defined('WP_DEBUG') && WP_DEBUG) {
-                            error_log(sprintf('MLA LearnDash Fallback Triggered for %s', $activity_type));
-                        }
+                        $debug_ld['fallback_triggered'] = true;
                     }
-
-                    // Se falhar (ex: por causa de pré-requisitos), tenta forçar via meta
-                    if (!$ld_completed && function_exists('learndash_get_course_id')) {
-                        // Às vezes o learndash_process_mark_complete é rigoroso demais
-                        // No entanto, vamos logar se possível ou apenas retornar o status
-                    }
+                } else {
+                    $debug_ld['error'] = 'Invalid post type: ' . $post_type;
                 }
             } else {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('MLA LearnDash Error: Text Record or WP Post ID not found for text_id ' . $result['text_id']);
-                }
+                $debug_ld['error'] = 'Text record not found or missing wp_post_id';
             }
+        } else {
+            $debug_ld = array('error' => 'LearnDash function missing or text_id empty');
         }
 
         return new WP_REST_Response(array(
             'success' => true,
             'response' => $result,
             'learndash_completed' => $ld_completed,
+            'debug_ld' => $debug_ld,
         ), 200);
     }
 }

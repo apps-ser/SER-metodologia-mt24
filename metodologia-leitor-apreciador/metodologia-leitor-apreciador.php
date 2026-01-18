@@ -3,7 +3,7 @@
  * Plugin Name:       Metodologia Mateus 24
  * Plugin URI:        https://github.com/ser/metodologia-leitor-apreciador
  * Description:       Implementa a Metodologia Mateus 24 para coleta estruturada de respostas reflexivas, com integração Supabase.
- * Version:           1.2.4
+ * Version:           1.2.5
  * Requires at least: 6.5.7
  * Requires PHP:      7.4.33
  * Author:            SER
@@ -24,7 +24,7 @@ if (!defined('WPINC')) {
 /**
  * Versão atual do plugin.
  */
-define('MLA_VERSION', '1.2.4');
+define('MLA_VERSION', '1.2.5');
 
 /**
  * Caminho absoluto do diretório do plugin.
