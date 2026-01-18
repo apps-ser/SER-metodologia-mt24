@@ -89,7 +89,8 @@ Formato de Saída (Markdown):
         $model = $this->get_model();
         $system_prompt = $this->get_system_prompt();
 
-        $user_content = "Aqui estão as respostas dos leitores para análise:\n\n" . json_encode($responses_json, JSON_UNESCAPED_UNICODE);
+        $responses_toon = MLA_Toon::encode($responses_json);
+        $user_content = "Aqui estão as respostas dos leitores para análise (formato TOON para economia de tokens):\n\n" . $responses_toon;
 
         if (!empty($context)) {
             $context_str = "\n\n--- CONTEXTO ADICIONAL ---\n";
