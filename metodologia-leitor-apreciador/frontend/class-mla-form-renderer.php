@@ -47,6 +47,18 @@ class MLA_Form_Renderer
 
         $steps = $this->get_steps($project_id);
 
+        // Contexto de parágrafos
+        global $post;
+        $paragraph_context = $this->get_paragraph_context($post ? $post->ID : 0);
+
+        if ($paragraph_context['enabled'] && $paragraph_context['step']) {
+            $steps[] = $paragraph_context['step'];
+        }
+
+        // Variáveis para a view
+        $paragraph_questions_enabled = $paragraph_context['enabled'];
+        $paragraphs_json = $paragraph_context['json'];
+
         ob_start();
         include MLA_PLUGIN_DIR . 'frontend/partials/form-container.php';
         return ob_get_clean();
@@ -215,7 +227,7 @@ class MLA_Form_Renderer
     private function repair_unicode_recursive($data)
     {
         if (is_string($data)) {
-            return preg_replace_callback('/u([0-9a-f]{4})/i', function ($matches) {
+            return preg_replace_callback('/(?<!\\\\)u([0-9a-f]{4})/i', function ($matches) {
                 return json_decode('"\u' . $matches[1] . '"');
             }, $data);
         }
@@ -237,5 +249,48 @@ class MLA_Form_Renderer
     public function is_progressive()
     {
         return isset($this->settings['progressive_form']) ? (bool) $this->settings['progressive_form'] : true;
+    }
+
+    /**
+     * Obtém o contexto e dados para o passo de perguntas por parágrafo.
+     *
+     * @param int $post_id ID do post.
+     * @return array Dados estruturados { enabled, json, step }.
+     */
+    private function get_paragraph_context($post_id)
+    {
+        if (!$post_id) {
+            return array('enabled' => false, 'json' => '[]', 'step' => null);
+        }
+
+        $enabled = get_post_meta($post_id, '_mla_paragraph_questions_enabled', true) === '1';
+        $json = '[]';
+        $step = null;
+
+        if ($enabled) {
+            $step = array(
+                'key' => 'perguntas_paragrafos',
+                'title' => __('Perguntas por Parágrafo', 'metodologia-leitor-apreciador'),
+                'description' => __('Algum conceito ou argumento despertou questionamentos? Se sim, faça suas perguntas abaixo.', 'metodologia-leitor-apreciador'),
+                'fields' => array(),
+                'is_conditional' => true
+            );
+
+            $raw_json = get_post_meta($post_id, '_mla_extracted_paragraphs', true);
+
+            if ($raw_json) {
+                $data = json_decode($raw_json, true);
+                if (is_array($data)) {
+                    $data = $this->repair_unicode_recursive($data);
+                    $json = wp_json_encode($data, JSON_UNESCAPED_UNICODE);
+                }
+            }
+        }
+
+        return array(
+            'enabled' => $enabled,
+            'json' => $json, // Retorna '[]' por padrão se vazio
+            'step' => $step
+        );
     }
 }

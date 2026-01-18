@@ -52,7 +52,7 @@ class MLA_AI_Service
     private function get_system_prompt()
     {
         $settings = get_option('mla_settings', array());
-        $default_prompt = "Você é um analista especializado na metodologia Leitor-Apreciador. 
+        $default_prompt = "Você é um analista especializado na Metodologia Mateus 24. 
 Sua tarefa é analisar um JSON contendo respostas de vários leitores sobre um texto específico.
 
 Objetivos:
@@ -121,7 +121,7 @@ Formato de Saída (Markdown):
                 'Authorization' => 'Bearer ' . $api_key,
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => get_site_url(),
-                'X-Title' => 'Metodologia Leitor-Apreciador WP Plugin'
+                'X-Title' => 'Metodologia Mateus 24 WP Plugin'
             ),
             'body' => json_encode($body),
             'timeout' => 60
@@ -160,7 +160,7 @@ Formato de Saída (Markdown):
             'timeout' => 15,
             'headers' => array(
                 'HTTP-Referer' => get_site_url(),
-                'X-Title' => 'Metodologia Leitor-Apreciador WP Plugin'
+                'X-Title' => 'Metodologia Mateus 24 WP Plugin'
             )
         ));
 

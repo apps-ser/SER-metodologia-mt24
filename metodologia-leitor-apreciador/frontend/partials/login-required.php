@@ -17,7 +17,7 @@ if (!defined('WPINC')) {
             <?php esc_html_e('Participação no Estudo', 'metodologia-leitor-apreciador'); ?>
         </h3>
         <p>
-            <?php esc_html_e('Para participar da Metodologia do Leitor-Apreciador, é necessário estar conectado à sua conta.', 'metodologia-leitor-apreciador'); ?>
+            <?php esc_html_e('Para participar da Metodologia Mateus 24, é necessário estar conectado à sua conta.', 'metodologia-leitor-apreciador'); ?>
         </p>
         <a href="<?php echo esc_url(wp_login_url(get_permalink())); ?>" class="mla-login-button">
             <?php esc_html_e('Fazer Login', 'metodologia-leitor-apreciador'); ?>

@@ -154,13 +154,21 @@ class MLA_Responses_Service
                 'updated_at' => $sanitized['updated_at'],
             );
 
-            // Se a resposta já foi submetida, salvamos as novas alterações no campo draft_data
-            // para não sobrescrever a versão oficial até que ele submeta novamente.
+            // Mesclar dados existentes para evitar perda de campos não enviados (ex: etapas não renderizadas)
+            $existing_data = isset($existing['data']) ? $existing['data'] : array();
+            $new_data = $sanitized['data'];
+
+            // Filtra nulos/vazios do novo payload antes de mesclar para não sobrescrever com nada
+            $filtered_new_data = array_filter($new_data, function ($val) {
+                return !empty($val);
+            });
+
+            $merged_data = array_merge($existing_data, $filtered_new_data);
+
             if ('submitted' === $existing['status']) {
-                $update_data['draft_data'] = $sanitized['data'];
+                $update_data['draft_data'] = $merged_data;
             } else {
-                // Se ainda é um rascunho, atualizamos o campo data principal normalmente.
-                $update_data['data'] = $sanitized['data'];
+                $update_data['data'] = $merged_data;
             }
 
             $result = $this->client->patch(self::TABLE_NAME, array(
@@ -339,9 +347,41 @@ class MLA_Responses_Service
                     ? wp_kses_post($data['data']['duvidas']) : '',
                 'perguntas' => isset($data['data']['perguntas'])
                     ? wp_kses_post($data['data']['perguntas']) : '',
+                'perguntas_paragrafos' => isset($data['data']['perguntas_paragrafos'])
+                    ? $this->sanitize_paragraphs_data($data['data']['perguntas_paragrafos']) : array(),
             );
         }
 
+        return $sanitized;
+    }
+
+    /**
+     * Sanitiza os dados das perguntas por parágrafo.
+     *
+     * @param array $paragraphs_data Dados dos parágrafos.
+     * @return array Dados sanitizados.
+     */
+    private function sanitize_paragraphs_data($paragraphs_data)
+    {
+        if (!is_array($paragraphs_data)) {
+            return array();
+        }
+
+        $sanitized = array();
+        foreach ($paragraphs_data as $id => $item) {
+            $key = sanitize_text_field($id);
+
+            // Suporta formato novo (array) ou antigo (string)
+            if (is_array($item)) {
+                $sanitized[$key] = array(
+                    'question' => isset($item['question']) ? wp_kses_post($item['question']) : '',
+                    'paragraph_text' => isset($item['paragraph_text']) ? wp_kses_post($item['paragraph_text']) : '',
+                );
+            } else {
+                // Mantém compatibilidade com formato antigo (apenas a pergunta)
+                $sanitized[$key] = wp_kses_post($item);
+            }
+        }
         return $sanitized;
     }
 
@@ -409,11 +449,32 @@ class MLA_Responses_Service
             'Perguntas',
             'Criado Em',
             'Atualizado Em',
+            'Perguntas por Parágrafo',
         ));
 
         // Dados
         foreach ($responses as $response) {
             $data = isset($response['data']) ? $response['data'] : array();
+
+            // Formatar perguntas por parágrafo para string
+            $perguntas_paragrafos_str = '';
+            if (isset($data['perguntas_paragrafos']) && is_array($data['perguntas_paragrafos'])) {
+                foreach ($data['perguntas_paragrafos'] as $pid => $p_resp) {
+                    if (!empty($p_resp)) {
+                        // Verifica se é formato novo (array) ou antigo (string)
+                        if (is_array($p_resp)) {
+                            $question = isset($p_resp['question']) ? $p_resp['question'] : '';
+                            $p_text = isset($p_resp['paragraph_text']) ? $p_resp['paragraph_text'] : '';
+
+                            if (!empty($question)) {
+                                $perguntas_paragrafos_str .= "[$pid] (Texto: $p_text)\nPergunta: $question\n\n";
+                            }
+                        } else {
+                            $perguntas_paragrafos_str .= "[$pid]: $p_resp\n";
+                        }
+                    }
+                }
+            }
 
             fputcsv($output, array(
                 $response['id'],
@@ -431,6 +492,7 @@ class MLA_Responses_Service
                 isset($data['perguntas']) ? $data['perguntas'] : '',
                 $response['created_at'],
                 $response['updated_at'],
+                $perguntas_paragrafos_str,
             ));
         }
 

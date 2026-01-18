@@ -107,11 +107,17 @@ class MLA_Admin
     {
         $plugin_pages = array(
             'toplevel_page_mla-main',
-            'leitor-apreciador_page_mla-projects',
-            'leitor-apreciador_page_mla-texts',
-            'leitor-apreciador_page_mla-responses',
-            'leitor-apreciador_page_mla-settings',
-            'leitor-apreciador_page_mla-debug',
+            'mateus-24_page_mla-projects',
+            'mateus-24_page_mla-texts',
+            'mateus-24_page_mla-responses',
+            'mateus-24_page_mla-settings',
+            'mateus-24_page_mla-debug',
+            // Variantes baseadas no slug (padrão WP)
+            'mla-main_page_mla-projects',
+            'mla-main_page_mla-texts',
+            'mla-main_page_mla-responses',
+            'mla-main_page_mla-settings',
+            'mla-main_page_mla-debug',
         );
 
         // Também verificar páginas de edição de posts

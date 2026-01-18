@@ -259,7 +259,7 @@ class MLA_Settings
         if (empty($templates)) {
             $templates[] = array(
                 'id' => 'tpl_default',
-                'name' => 'Metodologia Leitor-Apreciador (Padrão)',
+                'name' => 'Metodologia Mateus 24 (Padrão)',
                 'steps' => array(
                     array(
                         'key' => 'tema_central',
@@ -434,7 +434,7 @@ class MLA_Settings
     public function render_ai_system_prompt_field()
     {
         $settings = get_option(self::OPTION_KEY, array());
-        $default_prompt = "Você é um analista especializado na metodologia Leitor-Apreciador. 
+        $default_prompt = "Você é um analista especializado na Metodologia Mateus 24. 
 Sua tarefa é analisar um JSON contendo respostas de vários leitores sobre um texto específico.
 
 Objetivos:
@@ -469,7 +469,7 @@ Formato de Saída (Markdown):
             'quicktags' => true
         ));
 
-        echo '<p class="description">' . __('Descreva a metodologia Leitor-Apreciador. Este texto será enviado à IA como contexto para ajudar na análise.', 'metodologia-leitor-apreciador') . '</p>';
+        echo '<p class="description">' . __('Descreva a Metodologia Mateus 24. Este texto será enviado à IA como contexto para ajudar na análise.', 'metodologia-leitor-apreciador') . '</p>';
     }
 
     public function render_autosave_field()

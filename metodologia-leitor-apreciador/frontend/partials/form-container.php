@@ -15,13 +15,14 @@ $total_steps = count($steps);
 $is_progressive = $this->is_progressive();
 ?>
 
-<div id="mla-form-wrapper" class="mla-form-wrapper"
-    data-progressive="<?php echo $is_progressive ? 'true' : 'false'; ?>">
+<div id="mla-form-wrapper" class="mla-form-wrapper" data-progressive="<?php echo $is_progressive ? 'true' : 'false'; ?>"
+    data-paragraph-questions-enabled="<?php echo isset($paragraph_questions_enabled) && $paragraph_questions_enabled ? 'true' : 'false'; ?>"
+    data-paragraphs="<?php echo esc_attr(isset($paragraphs_json) ? $paragraphs_json : '[]'); ?>">
     <!-- Header -->
     <div class="mla-form-header">
         <h3 class="mla-form-title">
             <span class="mla-icon">📝</span>
-            <?php esc_html_e('Metodologia do Leitor-Apreciador', 'metodologia-leitor-apreciador'); ?>
+            <?php esc_html_e('Metodologia Mateus 24', 'metodologia-leitor-apreciador'); ?>
         </h3>
         <p class="mla-form-intro">
             <?php esc_html_e('Sua reflexão sobre este texto contribui para a construção coletiva do conhecimento.', 'metodologia-leitor-apreciador'); ?>
@@ -56,7 +57,8 @@ $is_progressive = $this->is_progressive();
     <form id="mla-form" class="mla-form" novalidate>
         <?php foreach ($steps as $num => $step): ?>
             <div class="mla-step <?php echo 1 === $num ? 'mla-step-active' : ''; ?>"
-                data-step="<?php echo esc_attr($num); ?>">
+                data-step="<?php echo esc_attr($num); ?>"
+                data-key="<?php echo esc_attr(isset($step['key']) ? $step['key'] : ''); ?>">
                 <div class="mla-step-header">
                     <h4 class="mla-step-title">
                         <?php echo esc_html($step['title']); ?>

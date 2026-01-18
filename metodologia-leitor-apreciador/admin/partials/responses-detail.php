@@ -138,6 +138,49 @@ $data = isset($response['data']) ? $response['data'] : array();
                     <?php echo wp_kses_post(nl2br(isset($data['perguntas']) ? $data['perguntas'] : '')); ?>
                 </div>
             </div>
+
+            <?php if (!empty($data['perguntas_paragrafos']) && is_array($data['perguntas_paragrafos'])): ?>
+                <div class="mla-field">
+                    <h4>
+                        <?php esc_html_e('Perguntas por Parágrafo', 'metodologia-leitor-apreciador'); ?>
+                    </h4>
+                    <div class="mla-field-content">
+                        <?php
+                        foreach ($data['perguntas_paragrafos'] as $key => $item) {
+                            $paragraph_text = '';
+                            $question_text = '';
+
+                            // Verifica formato (novo vs legado)
+                            if (is_array($item)) {
+                                $paragraph_text = isset($item['paragraph_text']) ? $item['paragraph_text'] : '';
+                                $question_text = isset($item['question']) ? $item['question'] : '';
+                            } else {
+                                $question_text = $item;
+                            }
+
+                            if (empty($question_text))
+                                continue;
+                            ?>
+                            <div class="mla-paragraph-response-item"
+                                style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                                <?php if (!empty($paragraph_text)): ?>
+                                    <div
+                                        style="font-style: italic; color: #666; margin-bottom: 8px; border-left: 3px solid #ddd; padding-left: 10px;">
+                                        "<?php echo esc_html($paragraph_text); ?>"
+                                    </div>
+                                <?php endif; ?>
+
+                                <div>
+                                    <strong><?php echo esc_html__('Pergunta do Leitor:', 'metodologia-leitor-apreciador'); ?></strong><br>
+                                    <?php echo wp_kses_post(nl2br($question_text)); ?>
+                                </div>
+                            </div>
+                            <?php
+                        }
+                        ?>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Histórico -->

@@ -37,7 +37,7 @@ class MLA_Activator
                 'step_templates' => array(
                     array(
                         'id' => 'tpl_default',
-                        'name' => 'Metodologia Leitor-Apreciador (Padrão)',
+                        'name' => 'Metodologia Mateus 24 (Padrão)',
                         'steps' => array(
                             array(
                                 'key' => 'tema_central',
@@ -84,7 +84,7 @@ class MLA_Activator
 
         // Log de ativação
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('Metodologia Leitor-Apreciador: Plugin ativado - v' . MLA_VERSION);
+            error_log('Metodologia Mateus 24: Plugin ativado - v' . MLA_VERSION);
         }
     }
 
@@ -104,7 +104,7 @@ class MLA_Activator
 
         // Log de desativação
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('Metodologia Leitor-Apreciador: Plugin desativado');
+            error_log('Metodologia Mateus 24: Plugin desativado');
         }
     }
 

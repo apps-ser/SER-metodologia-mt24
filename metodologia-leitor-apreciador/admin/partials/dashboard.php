@@ -13,7 +13,7 @@ if (!defined('WPINC')) {
 
 <div class="wrap mla-dashboard">
     <h1>
-        <?php esc_html_e('Leitor-Apreciador - Dashboard', 'metodologia-leitor-apreciador'); ?>
+        <?php esc_html_e('Mateus 24 - Dashboard', 'metodologia-leitor-apreciador'); ?>
     </h1>
 
     <div class="mla-dashboard-cards">
@@ -111,10 +111,10 @@ if (!defined('WPINC')) {
     <!-- Informações do Plugin -->
     <div class="mla-info-box">
         <h3>
-            <?php esc_html_e('Sobre a Metodologia do Leitor-Apreciador', 'metodologia-leitor-apreciador'); ?>
+            <?php esc_html_e('Sobre a Metodologia Mateus 24', 'metodologia-leitor-apreciador'); ?>
         </h3>
         <p>
-            <?php esc_html_e('Este plugin implementa a Metodologia do Leitor-Apreciador, permitindo que leitores respondam a formulários reflexivos estruturados ao final de textos selecionados.', 'metodologia-leitor-apreciador'); ?>
+            <?php esc_html_e('Este plugin implementa a Metodologia Mateus 24, permitindo que leitores respondam a formulários reflexivos estruturados ao final de textos selecionados.', 'metodologia-leitor-apreciador'); ?>
         </p>
         <p>
             <?php esc_html_e('As respostas são armazenadas de forma segura no Supabase, com versionamento automático e histórico completo de edições.', 'metodologia-leitor-apreciador'); ?>

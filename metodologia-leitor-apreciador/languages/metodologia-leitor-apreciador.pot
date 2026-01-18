@@ -2,7 +2,7 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Metodologia Leitor-Apreciador 1.0.0\n"
+"Project-Id-Version: Metodologia Mateus 24 1.0.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-01-01 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -14,19 +14,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: metodologia-leitor-apreciador.php
-msgid "Metodologia Leitor-Apreciador requer PHP %s ou superior."
+msgid "Metodologia Mateus 24 requer PHP %s ou superior."
 msgstr ""
 
 #: metodologia-leitor-apreciador.php
-msgid "Metodologia Leitor-Apreciador requer WordPress %s ou superior."
+msgid "Metodologia Mateus 24 requer WordPress %s ou superior."
 msgstr ""
 
 #: metodologia-leitor-apreciador.php
-msgid "Metodologia Leitor-Apreciador: Configure MLA_SUPABASE_URL e MLA_SUPABASE_ANON_KEY no wp-config.php."
+msgid "Metodologia Mateus 24: Configure MLA_SUPABASE_URL e MLA_SUPABASE_ANON_KEY no wp-config.php."
 msgstr ""
 
 #: admin/class-mla-admin-menu.php
-msgid "Leitor-Apreciador"
+msgid "Mateus 24"
 msgstr ""
 
 #: admin/class-mla-admin-menu.php
@@ -50,11 +50,11 @@ msgid "Configurações"
 msgstr ""
 
 #: admin/class-mla-metabox.php
-msgid "Metodologia do Leitor-Apreciador"
+msgid "Metodologia Mateus 24"
 msgstr ""
 
 #: admin/class-mla-metabox.php
-msgid "Ativar Metodologia do Leitor-Apreciador"
+msgid "Ativar Metodologia Mateus 24"
 msgstr ""
 
 #: admin/class-mla-metabox.php
@@ -170,7 +170,7 @@ msgid "Participação no Estudo"
 msgstr ""
 
 #: frontend/partials/login-required.php
-msgid "Para participar da Metodologia do Leitor-Apreciador, é necessário estar conectado à sua conta."
+msgid "Para participar da Metodologia Mateus 24, é necessário estar conectado à sua conta."
 msgstr ""
 
 #: frontend/partials/login-required.php

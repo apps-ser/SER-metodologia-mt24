@@ -40,7 +40,7 @@ $query = new WP_Query($args);
 
 <div class="wrap">
     <h1>
-        <?php esc_html_e('Debug - Metodologia Leitor-Apreciador', 'metodologia-leitor-apreciador'); ?>
+        <?php esc_html_e('Debug - Metodologia Mateus 24', 'metodologia-leitor-apreciador'); ?>
     </h1>
     <hr class="wp-header-end">
 
@@ -159,7 +159,7 @@ $query = new WP_Query($args);
     <?php else: ?>
         <div class="notice notice-warning">
             <p>
-                <?php esc_html_e('Nenhum post ou página tem a Metodologia Leitor-Apreciador ativada.', 'metodologia-leitor-apreciador'); ?>
+                <?php esc_html_e('Nenhum post ou página tem a Metodologia Mateus 24 ativada.', 'metodologia-leitor-apreciador'); ?>
             </p>
         </div>
     <?php endif; ?>

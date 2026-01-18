@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:       Metodologia Leitor-Apreciador
+ * Plugin Name:       Metodologia Mateus 24
  * Plugin URI:        https://github.com/ser/metodologia-leitor-apreciador
- * Description:       Implementa a Metodologia do Leitor-Apreciador para coleta estruturada de respostas reflexivas, com integração Supabase.
- * Version:           1.1.1
+ * Description:       Implementa a Metodologia Mateus 24 para coleta estruturada de respostas reflexivas, com integração Supabase.
+ * Version:           1.1.7
  * Requires at least: 6.5.7
  * Requires PHP:      7.4.33
  * Author:            SER
@@ -24,7 +24,7 @@ if (!defined('WPINC')) {
 /**
  * Versão atual do plugin.
  */
-define('MLA_VERSION', '1.1.1');
+define('MLA_VERSION', '1.1.7');
 
 /**
  * Caminho absoluto do diretório do plugin.
@@ -57,7 +57,7 @@ function mla_check_requirements()
                 '<div class="notice notice-error"><p>%s</p></div>',
                 sprintf(
                     /* translators: %s: Versão mínima do PHP */
-                    esc_html__('Metodologia Leitor-Apreciador requer PHP %s ou superior.', 'metodologia-leitor-apreciador'),
+                    esc_html__('Metodologia Mateus 24 requer PHP %s ou superior.', 'metodologia-leitor-apreciador'),
                     esc_html($php_version)
                 )
             );
@@ -72,7 +72,7 @@ function mla_check_requirements()
                 '<div class="notice notice-error"><p>%s</p></div>',
                 sprintf(
                     /* translators: %s: Versão mínima do WordPress */
-                    esc_html__('Metodologia Leitor-Apreciador requer WordPress %s ou superior.', 'metodologia-leitor-apreciador'),
+                    esc_html__('Metodologia Mateus 24 requer WordPress %s ou superior.', 'metodologia-leitor-apreciador'),
                     esc_html($wp_version)
                 )
             );
@@ -89,7 +89,7 @@ function mla_check_requirements()
         add_action('admin_notices', function () {
             printf(
                 '<div class="notice notice-warning"><p>%s <a href="%s">%s</a> %s</p></div>',
-                esc_html__('Metodologia Leitor-Apreciador: Supabase não está configurado.', 'metodologia-leitor-apreciador'),
+                esc_html__('Metodologia Mateus 24: Supabase não está configurado.', 'metodologia-leitor-apreciador'),
                 esc_url(admin_url('admin.php?page=mla-settings')),
                 esc_html__('Acesse as Configurações', 'metodologia-leitor-apreciador'),
                 esc_html__('ou defina as constantes no wp-config.php.', 'metodologia-leitor-apreciador')

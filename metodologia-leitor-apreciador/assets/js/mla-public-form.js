@@ -1,5 +1,5 @@
 /**
- * JavaScript Público - Formulário da Metodologia Leitor-Apreciador
+ * JavaScript Público - Formulário da Metodologia Mateus 24
  *
  * Implementa:
  * - Navegação progressiva entre etapas
@@ -198,33 +198,22 @@
     function fillFormData(data) {
         if (!data) return;
 
-        // Tenta preencher campos dinâmicos
-        if (mlaSettings.steps && mlaSettings.steps.length) {
-            mlaSettings.steps.forEach(function (step) {
-                if (step.fields) {
-                    step.fields.forEach(function (field) {
-                        if (data[field.name]) {
-                            $form.find('[name="' + field.name + '"]').val(data[field.name]);
-                        }
-                    });
-                }
-            });
-        } else {
-            // Fallback para campos legados (se não houver steps definidos)
-            var legacyFields = ['tema_central', 'temas_secundarios', 'correlacao',
-                'aspectos_positivos', 'duvidas', 'perguntas'];
+        $.each(data, function (key, value) {
+            // Campos normais
+            var $field = $form.find('[name="' + key + '"]');
+            if ($field.length) {
+                $field.val(value);
+            }
 
-            legacyFields.forEach(function (field) {
-                if (data[field]) {
-                    $form.find('[name="' + field + '"]').val(data[field]);
+            // Perguntas por Parágrafo
+            if (key === 'perguntas_paragrafos' && typeof value === 'object') {
+                $wrapper.data('saved-paragraphs-data', value);
+                if (!$.isEmptyObject(value)) {
+                    $wrapper.data('trigger-question-sim', true);
                 }
-            });
-        }
+            }
+        });
     }
-
-    /**
-     * Mostrar aviso de edição
-     */
     /**
      * Mostrar aviso de edição
      */
@@ -267,38 +256,165 @@
      * Atualizar UI
      */
     function updateUI() {
-        // Esconder todas as etapas
-        $steps.removeClass('mla-step-active');
-
-        // Mostrar etapa atual
-        $steps.filter('[data-step="' + state.currentStep + '"]').addClass('mla-step-active');
-
         // Atualizar barra de progresso
         var progress = (state.currentStep / state.totalSteps) * 100;
         $progressFill.css('width', progress + '%');
         $currentStepEl.text(state.currentStep);
 
-        // Atualizar título da etapa
-        var stepData = $steps.filter('[data-step="' + state.currentStep + '"]').find('.mla-step-title').text();
-        $stepTitle.text(stepData);
+        // Atualizar classes dos steps
+        $steps.removeClass('mla-step-active');
+        var $currentStepContainer = $steps.filter('[data-step="' + state.currentStep + '"]');
+        $currentStepContainer.addClass('mla-step-active');
 
-        // Controlar visibilidade dos botões
-        $btnPrev.toggle(state.currentStep > 1);
-        $btnNext.toggle(state.currentStep <= state.totalSteps);
-        $btnSubmit.hide();
-        $btnReview.hide();
+        // Atualizar título da barra
+        var title = $currentStepContainer.find('.mla-step-title').text();
+        $stepTitle.text(title);
 
-        // Na última etapa, mostrar revisar
-        if (state.currentStep === state.totalSteps) {
-            $btnNext.text(mlaSettings.i18n ? 'Revisar →' : 'Revisar →');
+        // Verificar se é o step de perguntas por parágrafo
+        renderParagraphQuestions($currentStepContainer);
+
+        // Atualizar botões
+        if (state.currentStep === 1) {
+            $btnPrev.hide();
         } else {
-            $btnNext.html('Próximo →');
+            $btnPrev.show();
         }
 
-        // Esconder resumo e sucesso
-        $wrapper.find('.mla-step-summary').hide();
-        $successMessage.hide();
-        $form.show();
+        if (state.currentStep === state.totalSteps) {
+            $btnNext.hide();
+            $btnReview.show();
+            $btnSubmit.show();
+        } else {
+            $btnNext.show();
+            // $btnReview.hide(); // Mantemos o botão de revisão visível se quiser pular pro final? Não, fluxo linear.
+            $btnReview.hide();
+            $btnSubmit.hide();
+        }
+
+        // Scroll para o topo do formulário
+        $('html, body').animate({
+            scrollTop: $wrapper.offset().top - 100
+        }, 500);
+    }
+
+    /**
+     * Renderiza as perguntas por parágrafo se necessário
+     */
+    /**
+     * Renderiza as perguntas por parágrafo se necessário
+     */
+    function renderParagraphQuestions($stepContainer) {
+        var paragraphQuestionsEnabled = $wrapper.data('paragraph-questions-enabled') === true;
+        var stepTitle = $stepContainer.find('.mla-step-title').text().trim();
+        var currentStepKey = $stepContainer.data('key');
+
+        // Verifica condições para renderizar
+        var isTargetStep = (currentStepKey === 'perguntas_paragrafos' || stepTitle.includes('Perguntas por Parágrafo'));
+        var alreadyRendered = $stepContainer.find('.mla-paragraph-questions-container').length > 0;
+
+        if (!paragraphQuestionsEnabled || !isTargetStep || alreadyRendered) {
+            return;
+        }
+
+        var paragraphs = getParagraphsData();
+        if (!paragraphs.length) return;
+
+        // Construção do HTML
+        var html = '<div class="mla-paragraph-questions-container">';
+        html += buildTriggerQuestionHtml();
+        html += buildParagraphsListHtml(paragraphs);
+        html += '</div>';
+
+        $stepContainer.find('.mla-step-fields').append(html);
+
+        // Inicialização do estado
+        initializeParagraphState($stepContainer);
+    }
+
+    /**
+     * Obtém os dados dos parágrafos do data-attribute
+     */
+    function getParagraphsData() {
+        var paragraphs = $wrapper.data('paragraphs');
+        if (typeof paragraphs === 'string') {
+            try {
+                paragraphs = JSON.parse(paragraphs);
+            } catch (e) {
+                paragraphs = [];
+            }
+        }
+        return paragraphs || [];
+    }
+
+    /**
+     * Gera HTML da pergunta gatilho
+     */
+    function buildTriggerQuestionHtml() {
+        return '<div class="mla-field mla-trigger-question">' +
+            '<label>Algum conceito ou argumento despertou questionamentos?</label>' +
+            '<div class="mla-radio-group">' +
+            '<label><input type="radio" name="mla_trigger_question" value="sim"> Sim</label>' +
+            '<label><input type="radio" name="mla_trigger_question" value="nao" checked> Não</label>' +
+            '</div>' +
+            '</div>';
+    }
+
+    /**
+     * Gera HTML da lista de parágrafos
+     */
+    function buildParagraphsListHtml(paragraphs) {
+        var html = '<div class="mla-paragraphs-list" style="display:none; margin-top: 20px;">';
+
+        $.each(paragraphs, function (i, p) {
+            html += '<div class="mla-paragraph-item" style="margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 4px;">';
+            html += '<div class="mla-paragraph-text" style="font-style: italic; color: #555; margin-bottom: 10px; font-size: 0.9em;">"' + escapeHtml(p.content) + '"</div>';
+            html += '<div class="mla-field">';
+            html += '<label for="mla_p_' + p.id + '">Sua pergunta sobre este trecho:</label>';
+            html += '<textarea id="mla_p_' + p.id + '" name="mla_paragraph_questions[' + p.id + ']" class="mla-textarea" rows="2" placeholder="Digite sua pergunta aqui..."></textarea>';
+            html += '</div>';
+            html += '</div>';
+        });
+
+        html += '</div>';
+        return html;
+    }
+
+    /**
+     * Inicializa estado e eventos dos parágrafos
+     */
+    function initializeParagraphState($stepContainer) {
+        var $container = $stepContainer.find('.mla-paragraph-questions-container');
+        var savedData = $wrapper.data('saved-paragraphs-data');
+        var triggerSim = $wrapper.data('trigger-question-sim');
+
+        // Restaurar dados salvos
+        if (savedData) {
+            $.each(savedData, function (pid, val) {
+                // Suporte a formato novo (objeto) ou legado (string)
+                var answerText = '';
+                if (typeof val === 'object' && val !== null && val.question) {
+                    answerText = val.question;
+                } else if (typeof val === 'string') {
+                    answerText = val;
+                }
+                $('#mla_p_' + pid).val(answerText);
+            });
+        }
+
+        // Restaurar estado do trigger
+        if (triggerSim) {
+            $container.find('input[name="mla_trigger_question"][value="sim"]').prop('checked', true);
+            $container.find('.mla-paragraphs-list').show();
+        }
+
+        // Bind eventos
+        $container.find('input[name="mla_trigger_question"]').on('change', function () {
+            if ($(this).val() === 'sim') {
+                $container.find('.mla-paragraphs-list').slideDown();
+            } else {
+                $container.find('.mla-paragraphs-list').slideUp();
+            }
+        });
     }
 
     /**
@@ -370,30 +486,49 @@
     /**
      * Coletar dados do formulário
      */
-    /**
-     * Coletar dados do formulário
-     */
     function collectFormData() {
-        var data = {
-            text_title: mlaSettings.textTitle || '',
-            project_name: mlaSettings.projectName || ''
-        };
+        var data = {};
 
-        if (mlaSettings.steps && mlaSettings.steps.length) {
-            mlaSettings.steps.forEach(function (step) {
-                if (step.fields) {
-                    step.fields.forEach(function (field) {
-                        data[field.name] = $form.find('[name="' + field.name + '"]').val() || '';
-                    });
+        // Campos padrão
+        $form.find('textarea:not([name^="mla_paragraph_questions"])').each(function () {
+            var name = $(this).attr('name');
+            var value = $(this).val();
+            if (name) {
+                data[name] = value;
+            }
+        });
+
+        // Perguntas por Parágrafo
+        var paragraphQuestions = {};
+
+        // Cache dos dados originais dos parágrafos
+        var paragraphsData = getParagraphsData();
+        var paragraphsMap = {};
+        if (paragraphsData && paragraphsData.length) {
+            paragraphsData.forEach(function (p) {
+                paragraphsMap[p.id] = p.content;
+            });
+        }
+
+        $form.find('textarea[name^="mla_paragraph_questions"]').each(function () {
+            var val = $(this).val();
+            if (val && val.trim() !== '') {
+                // Extrair ID do name="mla_paragraph_questions[p1]"
+                var name = $(this).attr('name');
+                var match = name.match(/\[(.*?)\]/);
+                if (match && match[1]) {
+                    var pId = match[1];
+                    // Salva objeto com pergunta e texto original
+                    paragraphQuestions[pId] = {
+                        question: val,
+                        paragraph_text: paragraphsMap[pId] || ''
+                    };
                 }
-            });
-        } else {
-            // Fallback legado
-            var legacyFields = ['tema_central', 'temas_secundarios', 'correlacao',
-                'aspectos_positivos', 'duvidas', 'perguntas'];
-            legacyFields.forEach(function (field) {
-                data[field] = $form.find('[name="' + field + '"]').val() || '';
-            });
+            }
+        });
+
+        if (!$.isEmptyObject(paragraphQuestions)) {
+            data['perguntas_paragrafos'] = paragraphQuestions;
         }
 
         return data;

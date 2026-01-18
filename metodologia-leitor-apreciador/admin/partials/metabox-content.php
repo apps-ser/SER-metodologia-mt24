@@ -23,12 +23,26 @@ if (!defined('WPINC')) {
         <label>
             <input type="checkbox" name="mla_enabled" id="mla_enabled" value="1" <?php checked($enabled, '1'); ?>>
             <strong>
-                <?php esc_html_e('Ativar Metodologia do Leitor-Apreciador', 'metodologia-leitor-apreciador'); ?>
+                <?php esc_html_e('Ativar Metodologia Mateus 24', 'metodologia-leitor-apreciador'); ?>
             </strong>
         </label>
     </p>
     <p class="description">
         <?php esc_html_e('Quando ativado, o formulário será exibido ao final do conteúdo para usuários logados.', 'metodologia-leitor-apreciador'); ?>
+    </p>
+
+    <!-- Checkbox: Perguntas por Parágrafo -->
+    <p style="margin-top: 15px;">
+        <label>
+            <input type="checkbox" name="mla_paragraph_questions_enabled" id="mla_paragraph_questions_enabled" value="1"
+                <?php checked($paragraph_questions_enabled, '1'); ?>>
+            <strong>
+                <?php esc_html_e('Ativar Perguntas por Parágrafo', 'metodologia-leitor-apreciador'); ?>
+            </strong>
+        </label>
+    </p>
+    <p class="description">
+        <?php esc_html_e('Adiciona uma etapa final opcional onde o leitor pode fazer perguntas sobre parágrafos específicos.', 'metodologia-leitor-apreciador'); ?>
     </p>
 
     <hr>

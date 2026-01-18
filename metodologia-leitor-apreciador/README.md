@@ -1,6 +1,6 @@
-# Metodologia Leitor-Apreciador
+# Metodologia Mateus 24
 
-Plugin WordPress para implementar a Metodologia do Leitor-Apreciador, permitindo que leitores logados respondam a formulários reflexivos estruturados ao final de textos selecionados, com integração Supabase para armazenamento externo.
+Plugin WordPress para implementar a Metodologia Mateus 24, permitindo que leitores logados respondam a formulários reflexivos estruturados ao final de textos selecionados, com integração Supabase para armazenamento externo.
 
 ## Requisitos
 
@@ -19,7 +19,7 @@ Plugin WordPress para implementar a Metodologia do Leitor-Apreciador, permitindo
 ### 1. Configurar no Painel Admin (Recomendado)
 
 Após ativar o plugin:
-1. Vá em **Leitor-Apreciador > Configurações**.
+1. Vá em **Mateus 24 > Configurações**.
 2. Role até a seção "Integração Supabase".
 3. Preencha os campos `URL do Projeto`, `Anon Public Key` e opcionalmente `Service Role Key`.
 4. Salve as alterações.
@@ -29,7 +29,7 @@ Após ativar o plugin:
 Você também pode definir as constantes no `wp-config.php`. Se definidas, elas terão prioridade sobre as configurações do painel.
 
 ```php
-// Metodologia Leitor-Apreciador - Supabase
+// Metodologia Mateus 24 - Supabase
 define( 'MLA_SUPABASE_URL', 'https://seu-projeto.supabase.co' );
 define( 'MLA_SUPABASE_ANON_KEY', 'sua-chave-anon-publica' );
 define( 'MLA_SUPABASE_SERVICE_KEY', 'sua-chave-service-role' ); // Para operações admin
@@ -132,14 +132,14 @@ USING (auth.uid()::text = wp_user_id::text);
 ### Ativar Metodologia em um Post/Página
 
 1. Edite um post ou página
-2. Na metabox lateral "Metodologia do Leitor-Apreciador":
-   - Marque "Ativar Metodologia do Leitor-Apreciador"
+2. Na metabox lateral "Metodologia Mateus 24":
+   - Marque "Ativar Metodologia Mateus 24"
    - Opcionalmente, selecione um projeto vinculado
 3. Publique/atualize o post
 
 ### Gerenciar no Admin
 
-Acesse o menu **Leitor-Apreciador** no admin:
+Acesse o menu **Mateus 24** no admin:
 
 - **Dashboard:** Visão geral com estatísticas
 - **Projetos:** Criar e gerenciar projetos

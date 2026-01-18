@@ -51,7 +51,7 @@ $texts_controller = new MLA_Texts();
         <div class="notice notice-info">
             <p>
                 <?php esc_html_e('Nenhum texto com a metodologia ativa encontrado.', 'metodologia-leitor-apreciador'); ?>
-                <?php esc_html_e('Para ativar a metodologia em um texto, edite um post ou página e marque a opção na metabox "Metodologia do Leitor-Apreciador".', 'metodologia-leitor-apreciador'); ?>
+                <?php esc_html_e('Para ativar a metodologia em um texto, edite um post ou página e marque a opção na metabox "Metodologia Mateus 24".', 'metodologia-leitor-apreciador'); ?>
             </p>
         </div>
     <?php else: ?>

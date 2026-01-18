@@ -66,8 +66,8 @@ class MLA_Admin_Menu
     {
         // Menu principal
         add_menu_page(
-            __('Leitor-Apreciador', 'metodologia-leitor-apreciador'),
-            __('Leitor-Apreciador', 'metodologia-leitor-apreciador'),
+            __('Mateus 24', 'metodologia-leitor-apreciador'),
+            __('Mateus 24', 'metodologia-leitor-apreciador'),
             'manage_options',
             'mla-main',
             array($this, 'render_main_page'),

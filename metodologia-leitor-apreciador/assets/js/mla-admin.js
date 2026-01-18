@@ -1,5 +1,5 @@
 /**
- * JavaScript Admin - Metodologia Leitor-Apreciador
+ * JavaScript Admin - Metodologia Mateus 24
  *
  * @package MetodologiaLeitorApreciador
  */
