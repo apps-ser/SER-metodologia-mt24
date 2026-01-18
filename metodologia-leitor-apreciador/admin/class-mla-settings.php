@@ -37,7 +37,13 @@ class MLA_Settings
      */
     public function enqueue_admin_scripts($hook)
     {
-        if ('leitor-apreciador_page_mla-settings' !== $hook) {
+        $plugin_pages = array(
+            'mateus-24_page_mla-settings',
+            'mla-main_page_mla-settings',
+            'leitor-apreciador_page_mla-settings' // Keep for compatibility
+        );
+
+        if (!in_array($hook, $plugin_pages, true)) {
             return;
         }
 
@@ -538,17 +544,25 @@ Formato de Saída (Markdown):
             if (is_array($templates)) {
                 $clean_templates = array();
                 foreach ($templates as $tpl) {
-                    if (empty($tpl['name']))
-                        continue; // Skip empty names
+                    if (empty($tpl['name']) && empty($tpl['id'])) {
+                        continue;
+                    }
 
                     $clean_steps = array();
                     if (isset($tpl['steps']) && is_array($tpl['steps'])) {
                         foreach ($tpl['steps'] as $step) {
-                            $clean_steps[] = array(
-                                'key' => sanitize_key($step['key']), // Keys must be safe
+                            $clean_step = array(
+                                'key' => sanitize_key($step['key']),
                                 'title' => sanitize_text_field($step['title']),
                                 'description' => sanitize_textarea_field($step['description'])
                             );
+
+                            // Preserve existing fields if they exist (not edited by JS editor yet)
+                            if (isset($step['fields'])) {
+                                $clean_step['fields'] = $step['fields'];
+                            }
+
+                            $clean_steps[] = $clean_step;
                         }
                     }
 

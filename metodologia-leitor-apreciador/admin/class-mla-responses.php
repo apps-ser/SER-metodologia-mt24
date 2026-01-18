@@ -178,6 +178,11 @@ class MLA_Responses
         // Obter dados do usuário WordPress
         $user = get_user_by('id', $response['wp_user_id']);
 
+        // Obter template para exibição dinâmica
+        $form_renderer = new MLA_Form_Renderer();
+        $project_id = isset($response['project_id']) ? $response['project_id'] : null;
+        $steps = $form_renderer->get_steps($project_id);
+
         // Obter dados do texto
         $text = null;
         if (!empty($response['text_id'])) {
@@ -212,15 +217,39 @@ class MLA_Responses
             wp_send_json_error(array('message' => __('Nenhuma resposta submetida encontrada para este texto.', 'metodologia-leitor-apreciador')));
         }
 
-        // 2. Formatar dados para a IA (Incluindo nomes de usuários)
+        // 2. Formatar dados para a IA (Incluindo nomes de usuários e títulos dos campos)
+        $project_id = !empty($responses[0]['project_id']) ? $responses[0]['project_id'] : null;
+        $form_renderer = new MLA_Form_Renderer();
+        $steps = $form_renderer->get_steps($project_id);
+
+        $step_labels = array();
+        foreach ($steps as $step) {
+            if (!empty($step['key'])) {
+                $step_labels[$step['key']] = $step['title'];
+            }
+        }
+
         $analysis_data = array();
         foreach ($responses as $resp) {
             $user = get_user_by('id', $resp['wp_user_id']);
             $reader_name = $user ? $user->display_name : __('Anônimo', 'metodologia-leitor-apreciador');
 
+            $labeled_respostas = array();
+            if (isset($resp['data']) && is_array($resp['data'])) {
+                foreach ($resp['data'] as $k => $v) {
+                    if ($k === 'perguntas_paragrafos') {
+                        // Trata perguntas por parágrafo separadamente se necessário, ou apenas passa a chave
+                        $labeled_respostas['Perguntas por Parágrafo'] = $v;
+                        continue;
+                    }
+                    $label = isset($step_labels[$k]) ? $step_labels[$k] : ucwords(str_replace('_', ' ', $k));
+                    $labeled_respostas[$label] = $v;
+                }
+            }
+
             $analysis_data[] = array(
                 'leitor' => $reader_name,
-                'respostas' => $resp['data'] // Corrigido de content para data
+                'respostas' => $labeled_respostas
             );
         }
 
@@ -253,9 +282,35 @@ class MLA_Responses
             'original_text' => $original_text
         );
 
-        // 4. Chamar o serviço de IA
+        // 4. Chamar o serviço de IA (com suporte a Lotes/Map-Reduce se necessário)
         $ai_service = new MLA_AI_Service();
-        $result = $ai_service->analyze_responses($analysis_data, $context);
+        $batch_size = 30; // Ajustável
+        $total_responses = count($analysis_data);
+        $result = '';
+
+        if ($total_responses <= $batch_size) {
+            // Processamento Direto (Caso Simples)
+            $result = $ai_service->analyze_responses($analysis_data, $context);
+        } else {
+            // Processamento em Lotes (Map-Reduce)
+            $batches = array_chunk($analysis_data, $batch_size);
+            $partial_results = array();
+            $batch_count = count($batches);
+
+            foreach ($batches as $index => $batch) {
+                $batch_context = $context;
+                $batch_context['is_partial'] = true;
+
+                $partial_res = $ai_service->analyze_responses($batch, $batch_context);
+                if (is_wp_error($partial_res)) {
+                    wp_send_json_error(array('message' => sprintf(__('Erro no lote %d de %d: %s', 'metodologia-leitor-apreciador'), $index + 1, $batch_count, $partial_res->get_error_message())));
+                }
+                $partial_results[] = $partial_res;
+            }
+
+            // Consolidação Final (Reduce)
+            $result = $ai_service->consolidate_partial_analyses($partial_results, $context);
+        }
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));

@@ -382,22 +382,18 @@ class MLA_Responses_Service
         }
 
         if (isset($data['data']) && is_array($data['data'])) {
-            $sanitized['data'] = array(
-                'tema_central' => isset($data['data']['tema_central'])
-                    ? wp_kses_post($data['data']['tema_central']) : '',
-                'temas_secundarios' => isset($data['data']['temas_secundarios'])
-                    ? wp_kses_post($data['data']['temas_secundarios']) : '',
-                'correlacao' => isset($data['data']['correlacao'])
-                    ? wp_kses_post($data['data']['correlacao']) : '',
-                'aspectos_positivos' => isset($data['data']['aspectos_positivos'])
-                    ? wp_kses_post($data['data']['aspectos_positivos']) : '',
-                'duvidas' => isset($data['data']['duvidas'])
-                    ? wp_kses_post($data['data']['duvidas']) : '',
-                'perguntas' => isset($data['data']['perguntas'])
-                    ? wp_kses_post($data['data']['perguntas']) : '',
-                'perguntas_paragrafos' => isset($data['data']['perguntas_paragrafos'])
-                    ? $this->sanitize_paragraphs_data($data['data']['perguntas_paragrafos']) : array(),
-            );
+            $sanitized_payload = array();
+            foreach ($data['data'] as $key => $value) {
+                if ($key === 'perguntas_paragrafos') {
+                    $sanitized_payload[$key] = $this->sanitize_paragraphs_data($value);
+                } elseif (is_array($value)) {
+                    // Recursive sterilization for nested arrays if needed, but for now just simple map
+                    $sanitized_payload[$key] = array_map('wp_kses_post', $value);
+                } else {
+                    $sanitized_payload[$key] = wp_kses_post($value);
+                }
+            }
+            $sanitized['data'] = $sanitized_payload;
         }
 
         return $sanitized;
@@ -480,8 +476,8 @@ class MLA_Responses_Service
 
         $output = fopen('php://temp', 'r+');
 
-        // Cabeçalhos
-        fputcsv($output, array(
+        // Cabeçalhos base
+        $headers = array(
             'ID',
             'Usuario ID',
             'Usuario Email',
@@ -489,31 +485,63 @@ class MLA_Responses_Service
             'Projeto ID',
             'Status',
             'Versao',
-            'Tema Central',
-            'Temas Secundarios',
-            'Correlacao',
-            'Aspectos Positivos',
-            'Duvidas',
-            'Perguntas',
-            'Criado Em',
-            'Atualizado Em',
-            'Perguntas por Parágrafo',
-        ));
+        );
+
+        // Identificar todas as chaves de dados únicas presentes em todas as respostas
+        $dynamic_keys = array();
+        foreach ($responses as $response) {
+            if (isset($response['data']) && is_array($response['data'])) {
+                foreach ($response['data'] as $key => $val) {
+                    if ($key !== 'perguntas_paragrafos' && !in_array($key, $dynamic_keys)) {
+                        $dynamic_keys[] = $key;
+                    }
+                }
+            }
+        }
+
+        // Adicionar chaves dinâmicas aos cabeçalhos
+        foreach ($dynamic_keys as $key) {
+            $headers[] = ucwords(str_replace('_', ' ', $key));
+        }
+
+        // Adicionar campos de data no final
+        $headers[] = 'Criado Em';
+        $headers[] = 'Atualizado Em';
+        $headers[] = 'Perguntas por Parágrafo';
+
+        fputcsv($output, $headers);
 
         // Dados
         foreach ($responses as $response) {
             $data = isset($response['data']) ? $response['data'] : array();
+
+            $row = array(
+                $response['id'],
+                $response['wp_user_id'],
+                isset($response['wp_user_email']) ? $response['wp_user_email'] : '',
+                $response['text_id'],
+                isset($response['project_id']) ? $response['project_id'] : '',
+                $response['status'],
+                $response['version']
+            );
+
+            // Adicionar valores das chaves dinâmicas
+            foreach ($dynamic_keys as $key) {
+                $row[] = isset($data[$key]) ? $data[$key] : '';
+            }
+
+            // Datas
+            $row[] = $response['created_at'];
+            $row[] = $response['updated_at'];
 
             // Formatar perguntas por parágrafo para string
             $perguntas_paragrafos_str = '';
             if (isset($data['perguntas_paragrafos']) && is_array($data['perguntas_paragrafos'])) {
                 foreach ($data['perguntas_paragrafos'] as $pid => $p_resp) {
                     if (!empty($p_resp)) {
-                        // Verifica se é formato novo (array) ou antigo (string)
                         if (is_array($p_resp)) {
                             $question = isset($p_resp['question']) ? $p_resp['question'] : '';
                             $p_text = isset($p_resp['paragraph_text']) ? $p_resp['paragraph_text'] : '';
-
                             if (!empty($question)) {
                                 $perguntas_paragrafos_str .= "[$pid] (Texto: $p_text)\nPergunta: $question\n\n";
                             }
@@ -523,25 +551,9 @@ class MLA_Responses_Service
                     }
                 }
             }
+            $row[] = $perguntas_paragrafos_str;
 
-            fputcsv($output, array(
-                $response['id'],
-                $response['wp_user_id'],
-                isset($response['wp_user_email']) ? $response['wp_user_email'] : '',
-                $response['text_id'],
-                isset($response['project_id']) ? $response['project_id'] : '',
-                $response['status'],
-                $response['version'],
-                isset($data['tema_central']) ? $data['tema_central'] : '',
-                isset($data['temas_secundarios']) ? $data['temas_secundarios'] : '',
-                isset($data['correlacao']) ? $data['correlacao'] : '',
-                isset($data['aspectos_positivos']) ? $data['aspectos_positivos'] : '',
-                isset($data['duvidas']) ? $data['duvidas'] : '',
-                isset($data['perguntas']) ? $data['perguntas'] : '',
-                $response['created_at'],
-                $response['updated_at'],
-                $perguntas_paragrafos_str,
-            ));
+            fputcsv($output, $row);
         }
 
         rewind($output);

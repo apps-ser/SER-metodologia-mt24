@@ -85,59 +85,80 @@ $data = isset($response['data']) ? $response['data'] : array();
                 <?php esc_html_e('Conteúdo da Apreciação', 'metodologia-leitor-apreciador'); ?>
             </h3>
 
-            <div class="mla-field">
-                <h4>
-                    <?php esc_html_e('Tema Central', 'metodologia-leitor-apreciador'); ?>
-                </h4>
-                <div class="mla-field-content">
-                    <?php echo wp_kses_post(nl2br(isset($data['tema_central']) ? $data['tema_central'] : '')); ?>
+            <?php if (!empty($steps) && is_array($steps)): ?>
+                <?php foreach ($steps as $step): ?>
+                    <?php
+                    $key = isset($step['key']) ? $step['key'] : '';
+                    $title = isset($step['title']) ? $step['title'] : '';
+                    $value = isset($data[$key]) ? $data[$key] : '—';
+                    if (empty($key))
+                        continue;
+                    ?>
+                    <div class="mla-field">
+                        <h4>
+                            <?php echo esc_html($title); ?>
+                        </h4>
+                        <div class="mla-field-content">
+                            <?php echo wp_kses_post(nl2br($value)); ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <!-- Fallback Legado se steps não estiverem definidos -->
+                <div class="mla-field">
+                    <h4>
+                        <?php esc_html_e('Tema Central', 'metodologia-leitor-apreciador'); ?>
+                    </h4>
+                    <div class="mla-field-content">
+                        <?php echo wp_kses_post(nl2br(isset($data['tema_central']) ? $data['tema_central'] : '')); ?>
+                    </div>
                 </div>
-            </div>
 
-            <div class="mla-field">
-                <h4>
-                    <?php esc_html_e('Temas Secundários', 'metodologia-leitor-apreciador'); ?>
-                </h4>
-                <div class="mla-field-content">
-                    <?php echo wp_kses_post(nl2br(isset($data['temas_secundarios']) ? $data['temas_secundarios'] : '')); ?>
+                <div class="mla-field">
+                    <h4>
+                        <?php esc_html_e('Temas Subsidiários', 'metodologia-leitor-apreciador'); ?>
+                    </h4>
+                    <div class="mla-field-content">
+                        <?php echo wp_kses_post(nl2br(isset($data['temas_subsidiarios']) ? $data['temas_subsidiarios'] : (isset($data['temas_secundarios']) ? $data['temas_secundarios'] : ''))); ?>
+                    </div>
                 </div>
-            </div>
 
-            <div class="mla-field">
-                <h4>
-                    <?php esc_html_e('Correlação Doutrinária', 'metodologia-leitor-apreciador'); ?>
-                </h4>
-                <div class="mla-field-content">
-                    <?php echo wp_kses_post(nl2br(isset($data['correlacao']) ? $data['correlacao'] : '')); ?>
+                <div class="mla-field">
+                    <h4>
+                        <?php esc_html_e('Correlações Doutrinárias', 'metodologia-leitor-apreciador'); ?>
+                    </h4>
+                    <div class="mla-field-content">
+                        <?php echo wp_kses_post(nl2br(isset($data['correlacoes_doutrinarias']) ? $data['correlacoes_doutrinarias'] : (isset($data['correlacao']) ? $data['correlacao'] : ''))); ?>
+                    </div>
                 </div>
-            </div>
 
-            <div class="mla-field">
-                <h4>
-                    <?php esc_html_e('Aspectos Positivos', 'metodologia-leitor-apreciador'); ?>
-                </h4>
-                <div class="mla-field-content">
-                    <?php echo wp_kses_post(nl2br(isset($data['aspectos_positivos']) ? $data['aspectos_positivos'] : '')); ?>
+                <div class="mla-field">
+                    <h4>
+                        <?php esc_html_e('Aspectos Positivos', 'metodologia-leitor-apreciador'); ?>
+                    </h4>
+                    <div class="mla-field-content">
+                        <?php echo wp_kses_post(nl2br(isset($data['aspectos_positivos']) ? $data['aspectos_positivos'] : '')); ?>
+                    </div>
                 </div>
-            </div>
 
-            <div class="mla-field">
-                <h4>
-                    <?php esc_html_e('Dúvidas Identificadas', 'metodologia-leitor-apreciador'); ?>
-                </h4>
-                <div class="mla-field-content">
-                    <?php echo wp_kses_post(nl2br(isset($data['duvidas']) ? $data['duvidas'] : '')); ?>
+                <div class="mla-field">
+                    <h4>
+                        <?php esc_html_e('Dúvidas', 'metodologia-leitor-apreciador'); ?>
+                    </h4>
+                    <div class="mla-field-content">
+                        <?php echo wp_kses_post(nl2br(isset($data['duvidas']) ? $data['duvidas'] : '')); ?>
+                    </div>
                 </div>
-            </div>
 
-            <div class="mla-field">
-                <h4>
-                    <?php esc_html_e('Perguntas Formuladas', 'metodologia-leitor-apreciador'); ?>
-                </h4>
-                <div class="mla-field-content">
-                    <?php echo wp_kses_post(nl2br(isset($data['perguntas']) ? $data['perguntas'] : '')); ?>
+                <div class="mla-field">
+                    <h4>
+                        <?php esc_html_e('Perguntas para os Autores', 'metodologia-leitor-apreciador'); ?>
+                    </h4>
+                    <div class="mla-field-content">
+                        <?php echo wp_kses_post(nl2br(isset($data['perguntas_autores']) ? $data['perguntas_autores'] : (isset($data['perguntas']) ? $data['perguntas'] : ''))); ?>
+                    </div>
                 </div>
-            </div>
+            <?php endif; ?>
 
             <?php if (!empty($data['perguntas_paragrafos']) && is_array($data['perguntas_paragrafos'])): ?>
                 <div class="mla-field">

@@ -99,8 +99,60 @@ Formato de Saída (Markdown):
             if (!empty($context['original_text'])) {
                 $context_str .= "\nTEXTO ORIGINAL ANALISADO PELOS LEITORES:\n" . wp_strip_all_tags($context['original_text']) . "\n";
             }
+            if (!empty($context['is_partial'])) {
+                $context_str .= "\nNOTA: Esta é uma análise parcial de um lote de respostas. Concentre-se em extrair o máximo de valor deste grupo específico.\n";
+            }
             $user_content = $context_str . "\n" . $user_content;
         }
+
+        return $this->call_api($model, $system_prompt, $user_content);
+    }
+
+    /**
+     * Consolida múltiplas análises parciais em uma única análise final.
+     *
+     * @param array $partial_results Array de strings (análises parciais).
+     * @param array $context Contexto adicional.
+     *
+     * @return string|WP_Error
+     */
+    public function consolidate_partial_analyses($partial_results, $context = array())
+    {
+        $api_key = $this->get_api_key();
+        if (empty($api_key)) {
+            return new WP_Error('mla_ai_missing_key', __('Chave da API do OpenRouter não configurada.', 'metodologia-leitor-apreciador'));
+        }
+
+        $model = $this->get_model();
+
+        $system_prompt = "Você é o Consolidador mestre da Metodologia Mateus 24. 
+Sua tarefa é receber várias análises parciais (feitas em lotes) e fundi-las em uma única Análise Final Coerente e Profunda.
+
+Objetivos de Consolidação:
+1. DE-DUPLICAÇÃO E RE-GRUPAMENTO: Analise todas as perguntas sugeridas em todos os lotes. Identifique temas recorrentes entre os lotes e crie grupos de perguntas ainda mais robustos e profundos. Não repita perguntas similares.
+2. SÍNTESE GLOBAL: Una as sínteses de cada lote em um único texto fluido que represente a voz de todos os leitores. Evite redundâncias entre os lotes.
+3. PRESERVAÇÃO DE CITAÇÕES: Mantenha as citações aos leitores originais em todo o texto final.
+
+Formato de Saída: Mantenha rigorosamente o formato Markdown solicitado anteriormente (# Análise Final, ## Perguntas, ## Síntese).";
+
+        $user_content = "Aqui estão as análises parciais obtidas dos diferentes lotes de leitores:\n\n";
+        foreach ($partial_results as $i => $result) {
+            $user_content .= "### LOTE " . ($i + 1) . ":\n" . $result . "\n\n---\n\n";
+        }
+
+        if (!empty($context['methodology'])) {
+            $user_content .= "\n\nRELEMBRE A METODOLOGIA:\n" . wp_strip_all_tags($context['methodology']);
+        }
+
+        return $this->call_api($model, $system_prompt, $user_content);
+    }
+
+    /**
+     * Faz a chamada real à API para evitar repetição de código.
+     */
+    private function call_api($model, $system_prompt, $user_content)
+    {
+        $api_key = $this->get_api_key();
 
         $body = array(
             'model' => $model,
@@ -124,7 +176,7 @@ Formato de Saída (Markdown):
                 'X-Title' => 'Metodologia Mateus 24 WP Plugin'
             ),
             'body' => json_encode($body),
-            'timeout' => 60
+            'timeout' => 90 // Aumentado para lidar com conteúdo maior
         ));
 
         if (is_wp_error($response)) {
