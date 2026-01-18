@@ -682,12 +682,6 @@
 
         if (learndashCompleted) {
             $successMessage.find('p').first().after('<p class="mla-ld-notice"><strong>✓ ' + mlaSettings.i18n.learndashCompletion + '</strong></p>');
-            $successMessage.find('p').first().after('<p class="mla-ld-notice-reload" style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">A página será atualizada em instantes para refletir seu progresso...</p>');
-
-            // Recarregar a página após 2 segundos para atualizar o sidebar do LearnDash
-            setTimeout(function () {
-                window.location.reload();
-            }, 2000);
         }
 
         // Resetar estado do botão submit para uso futuro
