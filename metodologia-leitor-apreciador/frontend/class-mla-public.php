@@ -128,6 +128,10 @@ class MLA_Public
                 'confirmSubmit' => __('Suas respostas poderão ser analisadas de forma coletiva e comparativa dentro do projeto. Deseja submeter?', 'metodologia-leitor-apreciador'),
                 'continueEditing' => __('Você já iniciou sua apreciação deste texto. Deseja continuar?', 'metodologia-leitor-apreciador'),
                 'editWarning' => __('Esta edição substituirá a versão anterior para fins de análise.', 'metodologia-leitor-apreciador'),
+                'submitButton' => __('✓ Submeter Apreciação', 'metodologia-leitor-apreciador'),
+                'confirmTitle' => __('Confirmar Submissão', 'metodologia-leitor-apreciador'),
+                'cancel' => __('Cancelar', 'metodologia-leitor-apreciador'),
+                'confirm' => __('Confirmar', 'metodologia-leitor-apreciador'),
             ),
         ));
     }

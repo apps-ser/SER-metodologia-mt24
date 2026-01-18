@@ -624,12 +624,12 @@
                     proceedToSubmit();
                 } else {
                     showToast(mlaSettings.i18n.error, 'error');
-                    $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+                    $btnSubmit.prop('disabled', false).html(mlaSettings.i18n.submitButton);
                 }
             },
             error: function () {
                 showToast(mlaSettings.i18n.error, 'error');
-                $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+                $btnSubmit.prop('disabled', false).html(mlaSettings.i18n.submitButton);
             }
         });
     }
@@ -638,9 +638,8 @@
      * Procede com a submissão final após garantir o rascunho
      */
     function proceedToSubmit() {
-        // Confirmar submissão com Modal Customizado
         showConfirm(
-            'Confirmar Submissão',
+            mlaSettings.i18n.confirmTitle,
             mlaSettings.i18n.confirmSubmit,
             function () {
                 $.ajax({
@@ -656,18 +655,18 @@
                             showToast(mlaSettings.i18n.submitted, 'success');
                         } else {
                             showToast(response.message || mlaSettings.i18n.error, 'error');
-                            $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+                            $btnSubmit.prop('disabled', false).html(mlaSettings.i18n.submitButton);
                         }
                     },
                     error: function () {
                         showToast(mlaSettings.i18n.error, 'error');
-                        $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+                        $btnSubmit.prop('disabled', false).html(mlaSettings.i18n.submitButton);
                     }
                 });
             },
             function () {
                 // Se cancelar a confirmação, reabilitar o botão
-                $btnSubmit.prop('disabled', false).html('✓ Submeter Apreciação');
+                $btnSubmit.prop('disabled', false).html(mlaSettings.i18n.submitButton);
             }
         );
     }
@@ -680,6 +679,9 @@
         $wrapper.find('.mla-step-summary').hide();
         $successMessage.show();
         $wrapper.find('.mla-progress-bar').hide();
+
+        // Resetar estado do botão submit para uso futuro
+        $btnSubmit.prop('disabled', false).html(mlaSettings.i18n.submitButton);
     }
 
     /**
@@ -689,6 +691,10 @@
         $successMessage.hide();
         $form.show();
         $wrapper.find('.mla-progress-bar').show();
+
+        // Garantir que o botão submit esteja resetado ao voltar a editar
+        $btnSubmit.prop('disabled', false).html(mlaSettings.i18n.submitButton);
+
         goToStep(1);
     }
 
@@ -751,15 +757,15 @@
     /**
      * Mostrar Modal de Confirmação
      */
-    function showConfirm(title, message, onConfirm) {
+    function showConfirm(title, message, onConfirm, onCancel) {
         var $overlay = $('<div class="mla-modal-overlay"></div>');
         var $modal = $('<div class="mla-modal"></div>');
 
         var html = '<h4>' + escapeHtml(title) + '</h4>';
         html += '<p>' + escapeHtml(message) + '</p>';
         html += '<div class="mla-modal-actions">';
-        html += '<button class="mla-btn mla-btn-secondary mla-btn-cancel">Cancelar</button>';
-        html += '<button class="mla-btn mla-btn-primary mla-btn-confirm">Confirmar</button>';
+        html += '<button class="mla-btn mla-btn-secondary mla-btn-cancel">' + escapeHtml(mlaSettings.i18n.cancel) + '</button>';
+        html += '<button class="mla-btn mla-btn-primary mla-btn-confirm">' + escapeHtml(mlaSettings.i18n.confirm) + '</button>';
         html += '</div>';
 
         $modal.html(html);
@@ -774,6 +780,9 @@
 
         $btnCancel.on('click', function () {
             $overlay.fadeOut(200, function () { $(this).remove(); });
+            if (typeof onCancel === 'function') {
+                onCancel();
+            }
         });
 
         $btnConfirm.on('click', function () {
